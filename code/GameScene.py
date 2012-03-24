@@ -7,8 +7,52 @@ from direct.showbase.DirectObject import DirectObject
 
 import direct.directbase.DirectStart
 
+class FirstPersonCamera(DirectObject):
+    def __init__(self):
+        # the below call only disables default mouse camera controls
+        base.disableMouse()
+        # disable mouse cursor
+        props = WindowProperties()
+        props.setCursorHidden(True) 
+        base.win.requestProperties(props)
+        # rotation angles. alpha refers to XY plane and beta refers to YZ plane.
+        alphaAngle = 0.0
+        betaAngle  = 0.0
+        #speeds
+        cameraSpeedRot = 0.05
+        cameraSpeedMov = 0.2
+        # getting mouse position
+        if base.mouseWatcherNode.hasMouse():
+            x=base.mouseWatcherNode.getMouseX()
+            y=base.mouseWatcherNode.getMouseY()
+        
+        self.setupInput()
+               
+    def setupInput(self): 
+        self.accept("w-repeat", self.setMoveTowards, [True]) 
+        self.accept("w-up-repeat", self.setMoveTowards, [False]) 
+        self.accept("s-repeat", self.setMoveBackwards, [True]) 
+        self.accept("s-up-repeat", self.setMoveBackwards, [False]) 
+        self.accept("a-repeat", self.setMoveLeft, [True]) 
+        self.accept("a-up-repeat", self.setMoveLeft, [False])
+        self.accept("d-repeat", self.setMoveRight, [True]) 
+        self.accept("d-up-repeat", self.setMoveRight, [False])
+
+    def setMoveTowards(self,value):
+        if(value == True):
+            base.camera.setPos(base.camera.getPos().getX(),base.camera.getPos().getY()+0.1, base.camera.getPos().getZ())     
+    def setMoveBackwards(self,value): 
+        base.camera.setPos(base.camera.getPos().getX(),base.camera.getPos().getY()-0.1, base.camera.getPos().getZ())
+    def setMoveLeft(self,value):
+        base.camera.setPos(base.camera.getPos().getX()-0.1,base.camera.getPos().getY(), base.camera.getPos().getZ())
+    def setMoveRight(self,value): 
+        base.camera.setPos(base.camera.getPos().getX()+0.1,base.camera.getPos().getY(), base.camera.getPos().getZ())
+
 class World(DirectObject):
     def __init__(self):
+        
+        # camera load
+        camera = FirstPersonCamera()
         
         #** Collision system ignition - even if we're going to interact with the physics routines, the usual traverser is always in charge to drive collisions
         base.cTrav=CollisionTraverser()
