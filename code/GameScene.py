@@ -15,45 +15,68 @@ class FirstPersonCamera(DirectObject):
         props = WindowProperties()
         props.setCursorHidden(True) 
         base.win.requestProperties(props)
-        # rotation angles. alpha refers to XY plane and beta refers to YZ plane.
-        alphaAngle = 0.0
-        betaAngle  = 0.0
+        #setup a position for our camera - this values are just for test purposes
+        base.camera.setPos(0,-30,16)
+        #initializers
+        self.setupVars()
+        self.setupInput()
+        self.setupTasks()
+        
+    def setupVars(self):
         #speeds
-        cameraSpeedRot = 0.05
-        cameraSpeedMov = 0.2
+        self.cameraSpeedRot = 0.05
+        self.cameraSpeedMov = 0.1
+        #keyboard movement triggers
+        self.moveTowards  = False
+        self.moveBackwards = False
+        self.moveLeft  = False
+        self.moveRight = False
         # getting mouse position
         if base.mouseWatcherNode.hasMouse():
             x=base.mouseWatcherNode.getMouseX()
             y=base.mouseWatcherNode.getMouseY()
-        
-        self.setupInput()
-               
-    def setupInput(self): 
-        self.accept("w-repeat", self.setMoveTowards, [True]) 
-        self.accept("w-up-repeat", self.setMoveTowards, [False]) 
-        self.accept("s-repeat", self.setMoveBackwards, [True]) 
-        self.accept("s-up-repeat", self.setMoveBackwards, [False]) 
-        self.accept("a-repeat", self.setMoveLeft, [True]) 
-        self.accept("a-up-repeat", self.setMoveLeft, [False])
-        self.accept("d-repeat", self.setMoveRight, [True]) 
-        self.accept("d-up-repeat", self.setMoveRight, [False])
+            #TODO: add mouse functionality
+            
+    def setupInput(self):
+        self.accept("w", self.setMoveTowards, [True])  
+        self.accept("w-up", self.setMoveTowards, [False]) 
+        self.accept("s", self.setMoveBackwards, [True]) 
+        self.accept("s-up", self.setMoveBackwards, [False]) 
+        self.accept("a", self.setMoveLeft, [True]) 
+        self.accept("a-up", self.setMoveLeft, [False])
+        self.accept("d", self.setMoveRight, [True]) 
+        self.accept("d-up", self.setMoveRight, [False])
 
+    def setupTasks(self):
+        # handles keyboard movement
+        taskMgr.add(self.cameraMove, "Camera Move")
+               
+    # this setters triggers keyboard movement of our camera    
     def setMoveTowards(self,value):
-        if(value == True):
-            base.camera.setPos(base.camera.getPos().getX(),base.camera.getPos().getY()+0.1, base.camera.getPos().getZ())     
-    def setMoveBackwards(self,value): 
-        base.camera.setPos(base.camera.getPos().getX(),base.camera.getPos().getY()-0.1, base.camera.getPos().getZ())
+        self.moveTowards = value
+    def setMoveBackwards(self,value):
+        self.moveBackwards = value 
     def setMoveLeft(self,value):
-        base.camera.setPos(base.camera.getPos().getX()-0.1,base.camera.getPos().getY(), base.camera.getPos().getZ())
-    def setMoveRight(self,value): 
-        base.camera.setPos(base.camera.getPos().getX()+0.1,base.camera.getPos().getY(), base.camera.getPos().getZ())
+        self.moveLeft = value   
+    def setMoveRight(self,value):
+        self.moveRight = value
+    
+    # the camera movement itself
+    def cameraMove(self, task): 
+        if(self.moveTowards == True): 
+            base.camera.setPos(base.camera.getPos().getX(),base.camera.getPos().getY()+self.cameraSpeedMov, base.camera.getPos().getZ())
+        if(self.moveBackwards == True): 
+            base.camera.setPos(base.camera.getPos().getX(),base.camera.getPos().getY()-self.cameraSpeedMov, base.camera.getPos().getZ())
+        if(self.moveLeft == True): 
+            base.camera.setPos(base.camera.getPos().getX()-self.cameraSpeedMov,base.camera.getPos().getY(), base.camera.getPos().getZ())
+        if(self.moveRight == True): 
+            base.camera.setPos(base.camera.getPos().getX()+self.cameraSpeedMov,base.camera.getPos().getY(), base.camera.getPos().getZ())     
+        return task.cont
 
 class World(DirectObject):
     def __init__(self):
-        
         # camera load
         camera = FirstPersonCamera()
-        
         #** Collision system ignition - even if we're going to interact with the physics routines, the usual traverser is always in charge to drive collisions
         base.cTrav=CollisionTraverser()
         # look here: we enable the particle system - this is the evidence of what I was saying above, because the panda physics engine is conceived mainly to manage particles.
