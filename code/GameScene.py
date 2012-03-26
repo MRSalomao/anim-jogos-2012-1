@@ -31,6 +31,7 @@ class FirstPersonCamera(DirectObject):
         self.moveBackwards = False
         self.moveLeft  = False
         self.moveRight = False
+        self.orbit = None 
         # getting mouse position
         if base.mouseWatcherNode.hasMouse():
             x=base.mouseWatcherNode.getMouseX()
@@ -46,10 +47,13 @@ class FirstPersonCamera(DirectObject):
         self.accept("a-up", self.setMoveLeft, [False])
         self.accept("d", self.setMoveRight, [True]) 
         self.accept("d-up", self.setMoveRight, [False])
+        self.accept("mouse3", self.setOrbit, [True]) 
+        self.accept("mouse3-up", self.setOrbit, [False])
 
     def setupTasks(self):
         # handles keyboard movement
         taskMgr.add(self.cameraMove, "Camera Move")
+        taskMgr.add(self.cameraOrbit, "Camera Orbit")
                
     # this setters triggers keyboard movement of our camera    
     def setMoveTowards(self,value):
@@ -72,6 +76,56 @@ class FirstPersonCamera(DirectObject):
         if(self.moveRight == True): 
             base.camera.setPos(base.camera.getPos().getX()+self.cameraSpeedMov,base.camera.getPos().getY(), base.camera.getPos().getZ())     
         return task.cont
+    
+    def setOrbit(self, orbit): 
+      if(orbit == True): 
+         props = base.win.getProperties() 
+         winX = props.getXSize() 
+         winY = props.getYSize() 
+         if base.mouseWatcherNode.hasMouse(): 
+            mX = base.mouseWatcherNode.getMouseX() 
+            mY = base.mouseWatcherNode.getMouseY() 
+            mPX = winX * ((mX+1)/2) 
+            mPY = winY * ((-mY+1)/2) 
+         self.orbit = [[mX, mY], [mPX, mPY]] 
+      else: 
+         self.orbit = None 
+    
+    def cameraOrbit(self, task): 
+      if(self.orbit != None): 
+         if base.mouseWatcherNode.hasMouse(): 
+             
+            mpos = base.mouseWatcherNode.getMouse() 
+             
+            base.win.movePointer(0, int(self.orbit[1][0]), int(self.orbit[1][1])) 
+             
+            deltaH = 90 * (mpos[0] - self.orbit[0][0]) 
+            deltaP = 90 * (mpos[1] - self.orbit[0][1]) 
+             
+            limit = .5 
+             
+            if(-limit < deltaH and deltaH < limit): 
+               deltaH = 0 
+            elif(deltaH > 0): 
+               deltaH - limit 
+            elif(deltaH < 0): 
+               deltaH + limit 
+                
+            if(-limit < deltaP and deltaP < limit): 
+               deltaP = 0 
+            elif(deltaP > 0): 
+               deltaP - limit 
+            elif(deltaP < 0): 
+               deltaP + limit 
+
+            newH = (base.camera.getH() + -deltaH) 
+            newP = (base.camera.getP() + deltaP) 
+            if(newP < -90): newP = -90 
+            if(newP > 90): newP = 90 
+          
+            base.camera.setHpr(newH, newP, 0)             
+          
+      return task.cont 
 
 class World(DirectObject):
     def __init__(self):
