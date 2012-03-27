@@ -5,6 +5,7 @@ Created on 24/03/2012
 from pandac.PandaModules import *
 from direct.showbase.DirectObject import DirectObject
 
+import sys
 import direct.directbase.DirectStart
 
 class FirstPersonCamera(DirectObject):
@@ -13,7 +14,7 @@ class FirstPersonCamera(DirectObject):
         base.disableMouse()
         # disable mouse cursor
         props = WindowProperties()
-        props.setCursorHidden(True) 
+#        props.setCursorHidden(True) 
         base.win.requestProperties(props)
         #setup a position for our camera - this values are just for test purposes
         base.camera.setPos(0,-30,16)
@@ -31,12 +32,8 @@ class FirstPersonCamera(DirectObject):
         self.moveBackwards = False
         self.moveLeft  = False
         self.moveRight = False
-        self.orbit = None 
-        # getting mouse position
-        if base.mouseWatcherNode.hasMouse():
-            x=base.mouseWatcherNode.getMouseX()
-            y=base.mouseWatcherNode.getMouseY()
-            #TODO: add mouse functionality
+        self.orbit = None
+        self.checkForMousePos = True
             
     def setupInput(self):
         self.accept("w", self.setMoveTowards, [True])  
@@ -47,12 +44,12 @@ class FirstPersonCamera(DirectObject):
         self.accept("a-up", self.setMoveLeft, [False])
         self.accept("d", self.setMoveRight, [True]) 
         self.accept("d-up", self.setMoveRight, [False])
-        self.accept("mouse3", self.setOrbit, [True]) 
-        self.accept("mouse3-up", self.setOrbit, [False])
-
+        
+        
     def setupTasks(self):
         # handles keyboard movement
         taskMgr.add(self.cameraMove, "Camera Move")
+        taskMgr.add(self.captureMousePos, "Camera Orbit")
         taskMgr.add(self.cameraOrbit, "Camera Orbit")
                
     # this setters triggers keyboard movement of our camera    
@@ -77,58 +74,69 @@ class FirstPersonCamera(DirectObject):
             base.camera.setPos(base.camera.getPos().getX()+self.cameraSpeedMov,base.camera.getPos().getY(), base.camera.getPos().getZ())     
         return task.cont
     
-    def setOrbit(self, orbit): 
-      if(orbit == True): 
-         props = base.win.getProperties() 
-         winX = props.getXSize() 
-         winY = props.getYSize() 
-         if base.mouseWatcherNode.hasMouse(): 
+    def captureMousePos(self, task):   
+        if (base.mouseWatcherNode.hasMouse() and self.checkForMousePos): 
+            props = base.win.getProperties() 
+            winX = props.getXSize() 
+            winY = props.getYSize()
             mX = base.mouseWatcherNode.getMouseX() 
-            mY = base.mouseWatcherNode.getMouseY() 
-            mPX = winX * ((mX+1)/2) 
-            mPY = winY * ((-mY+1)/2) 
-         self.orbit = [[mX, mY], [mPX, mPY]] 
-      else: 
-         self.orbit = None 
-    
-    def cameraOrbit(self, task): 
-      if(self.orbit != None): 
-         if base.mouseWatcherNode.hasMouse(): 
-             
-            mpos = base.mouseWatcherNode.getMouse() 
-             
-            base.win.movePointer(0, int(self.orbit[1][0]), int(self.orbit[1][1])) 
-             
-            deltaH = 90 * (mpos[0] - self.orbit[0][0]) 
-            deltaP = 90 * (mpos[1] - self.orbit[0][1]) 
-             
-            limit = .5 
-             
-            if(-limit < deltaH and deltaH < limit): 
-               deltaH = 0 
-            elif(deltaH > 0): 
-               deltaH - limit 
-            elif(deltaH < 0): 
-               deltaH + limit 
-                
-            if(-limit < deltaP and deltaP < limit): 
-               deltaP = 0 
-            elif(deltaP > 0): 
-               deltaP - limit 
-            elif(deltaP < 0): 
-               deltaP + limit 
-
-            newH = (base.camera.getH() + -deltaH) 
-            newP = (base.camera.getP() + deltaP) 
-            if(newP < -90): newP = -90 
-            if(newP > 90): newP = 90 
-          
-            base.camera.setHpr(newH, newP, 0)             
-          
-      return task.cont 
+            mY = base.mouseWatcherNode.getMouseY()
+            # our mouse X and Y range from -1 to 1, so we change this from 0 to 1 values and multiply by window size
+            mPX = winX * ((mX+1)/2)
+            mPY = winY * ((-mY+1)/2)
+            self.orbit = [[mX, mY], [mPX, mPY]]
+            self.checkForMousePos = False
+        elif (base.mouseWatcherNode.hasMouse() == False): 
+            self.checkForMousePos = True 
+        return task.cont 
+  
+    def cameraOrbit(self, task):
+        if(self.checkForMousePos == False): 
+           if base.mouseWatcherNode.hasMouse(): 
+               
+              mpos = base.mouseWatcherNode.getMouse() 
+              
+              # first argument selects mouse; second and third sets the cursor position 
+              base.win.movePointer(0, int(self.orbit[1][0]), int(self.orbit[1][1])) 
+              
+              # trying to catch some delta on our orientation 
+              deltaH = 90 * (mpos[0] - self.orbit[0][0]) 
+              deltaP = 90 * (mpos[1] - self.orbit[0][1]) 
+               
+              limit = .5 
+              
+              # fine tuning
+              if(-limit < deltaH and deltaH < limit): 
+                 deltaH = 0 
+              elif(deltaH > 0): 
+                 deltaH - limit 
+              elif(deltaH < 0): 
+                 deltaH + limit 
+                  
+              if(-limit < deltaP and deltaP < limit): 
+                 deltaP = 0 
+              elif(deltaP > 0): 
+                 deltaP - limit 
+              elif(deltaP < 0): 
+                 deltaP + limit 
+        
+              newH = (base.camera.getH() + -deltaH) 
+              newP = (base.camera.getP() + deltaP) 
+              if(newP < -90): newP = -90 
+              if(newP > 90): newP = 90 
+            
+              base.camera.setHpr(newH, newP, 0)             
+            
+        return task.cont 
 
 class World(DirectObject):
     def __init__(self):
+        #fullscreen
+#        wp = WindowProperties() 
+#        wp.setFullscreen(True) 
+#        base.win.requestProperties(wp)
+        #esc kills our game
+        self.accept("escape",sys.exit)
         # camera load
         camera = FirstPersonCamera()
         #** Collision system ignition - even if we're going to interact with the physics routines, the usual traverser is always in charge to drive collisions
