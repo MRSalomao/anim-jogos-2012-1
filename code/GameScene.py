@@ -4,17 +4,21 @@ Created on 24/03/2012
 '''
 from pandac.PandaModules import *
 from direct.showbase.DirectObject import DirectObject
+from math import *
 
 import sys
 import direct.directbase.DirectStart
 
 class FirstPersonCamera(DirectObject):
+    
+    currentTheta = 0.0
+    
     def __init__(self):
         # the below call only disables default mouse camera controls
         base.disableMouse()
         # disable mouse cursor
         props = WindowProperties()
-#        props.setCursorHidden(True) 
+        props.setCursorHidden(True) 
         base.win.requestProperties(props)
         #setup a position for our camera - this values are just for test purposes
         base.camera.setPos(0,-30,16)
@@ -25,8 +29,8 @@ class FirstPersonCamera(DirectObject):
         
     def setupVars(self):
         #speeds
-        self.cameraSpeedRot = 0.05
-        self.cameraSpeedMov = 0.1
+        self.cameraSpeedRot = 0.01
+        self.cameraSpeedMov = 1
         #keyboard movement triggers
         self.moveTowards  = False
         self.moveBackwards = False
@@ -64,14 +68,26 @@ class FirstPersonCamera(DirectObject):
     
     # the camera movement itself
     def cameraMove(self, task): 
-        if(self.moveTowards == True): 
-            base.camera.setPos(base.camera.getPos().getX(),base.camera.getPos().getY()+self.cameraSpeedMov, base.camera.getPos().getZ())
+        if(self.moveTowards == True):       
+            base.camera.setPos(base.camera.getPos().getX() - self.cameraSpeedMov * sin(self.currentTheta / 180 * pi),
+                               base.camera.getPos().getY() + self.cameraSpeedMov * cos(self.currentTheta / 180 * pi), 
+                               base.camera.getPos().getZ() )  
+            
         if(self.moveBackwards == True): 
-            base.camera.setPos(base.camera.getPos().getX(),base.camera.getPos().getY()-self.cameraSpeedMov, base.camera.getPos().getZ())
+            base.camera.setPos(base.camera.getPos().getX() + self.cameraSpeedMov * sin(self.currentTheta / 180 * pi),
+                               base.camera.getPos().getY() - self.cameraSpeedMov * cos(self.currentTheta / 180 * pi), 
+                               base.camera.getPos().getZ() )
+            
         if(self.moveLeft == True): 
-            base.camera.setPos(base.camera.getPos().getX()-self.cameraSpeedMov,base.camera.getPos().getY(), base.camera.getPos().getZ())
+            base.camera.setPos(base.camera.getPos().getX() - self.cameraSpeedMov * cos(self.currentTheta / 180 * pi),
+                               base.camera.getPos().getY() - self.cameraSpeedMov * sin(self.currentTheta / 180 * pi), 
+                               base.camera.getPos().getZ() )
         if(self.moveRight == True): 
-            base.camera.setPos(base.camera.getPos().getX()+self.cameraSpeedMov,base.camera.getPos().getY(), base.camera.getPos().getZ())     
+            base.camera.setPos(base.camera.getPos().getX() + self.cameraSpeedMov * cos(self.currentTheta / 180 * pi), 
+                               base.camera.getPos().getY() + self.cameraSpeedMov * sin(self.currentTheta / 180 * pi), 
+                               base.camera.getPos().getZ() )
+            
+               
         return task.cont
     
     def captureMousePos(self, task):   
@@ -120,13 +136,14 @@ class FirstPersonCamera(DirectObject):
               elif(deltaP < 0): 
                  deltaP + limit 
         
-              newH = (base.camera.getH() + -deltaH) 
-              newP = (base.camera.getP() + deltaP) 
-              if(newP < -90): newP = -90 
-              if(newP > 90): newP = 90 
+              newH = (base.camera.getH() + -deltaH)
+              newP = (base.camera.getP() + deltaP)
+              if(newP < -90): newP = -90
+              if(newP > 90): newP = 90
             
-              base.camera.setHpr(newH, newP, 0)             
-            
+              self.currentTheta = newH
+              base.camera.setHpr(newH, newP, 0)
+               
         return task.cont 
 
 class World(DirectObject):
