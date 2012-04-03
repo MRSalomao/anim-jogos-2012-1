@@ -59,6 +59,7 @@ class Main(ShowBase):
         self.crosshairNP=base.camera.attachNewNode(self.pickerNode)
         self.crosshairRay=CollisionRay(Point3(0,0,0),Vec3(0,1,0))
         self.pickerNode.addSolid(self.crosshairRay)
+        self.pickerNode.setIntoCollideMask(BitMask32.allOff())
         base.cTrav.addCollider(self.crosshairNP, collisionHandler)
 
         # loading student_chair model
