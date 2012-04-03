@@ -5,22 +5,23 @@ from pandac.PandaModules import CardMaker
 class PlayerHUD(object):
     
     def __init__(self, mainReference):
-        self.mainRef = mainReference  
+        self.mainRef = mainReference
         
-        SCREEN_WIDTH = 800 
-        SCREEN_HEIGHT = 600 
+        self.winSizeX = self.mainRef.win.getProperties().getXSize() 
+        self.winSizeY = self.mainRef.win.getProperties().getYSize()  
 
-        sprites_root = self.createSpritesNodeSetup(SCREEN_WIDTH, SCREEN_HEIGHT, self.mainRef.render2d)
+        # parent of all sprites
+        sprites_root = self.createSpritesNodeSetup()
         
         # crosshair init
-        self.crosshairSprite = self.createSprite('../../textures/crosshair.png', SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, 16, 16, 1) 
+        self.crosshairSprite = self.createSprite('../../textures/crosshair.png', self.winSizeX/2, self.winSizeY/2, 16, 16, 1) 
         self.crosshairSprite.reparentTo(sprites_root)
         
-    def createSpritesNodeSetup(self,screenWidth, screenHeight, parent): 
+    def createSpritesNodeSetup(self): 
     
-        aspect_ratio = parent.getScale()[0]    
+        aspect_ratio = self.mainRef.render2d.getScale()[0]    
          
-        screenOrigin = parent.attachNewNode('screen_origin') 
+        screenOrigin = self.mainRef.render2d.attachNewNode('screen_origin') 
         screenNode = screenOrigin.attachNewNode('screen_node') 
         
         screenOrigin.setPos(-1.0/aspect_ratio, 0.0, 1.0) 
@@ -28,13 +29,8 @@ class PlayerHUD(object):
         
         screenNode.setPos(0, 0, 0) 
          
-        screenNode.setScale(1.0/(aspect_ratio*screenWidth), 1.0, 1.0/screenHeight) 
-        screenNode.setTexScale(TextureStage.getDefault(), 1.0, -1.0) 
-         
-        # test some points    
-        #   points = [(0,0), (screenWidth, 0), (screenWidth, screenHeight), (screenWidth/2.0, screenHeight/2.0), (0, screenHeight)] 
-        #   for pt in points: 
-        #      print '%s -> %s' % (pt, str(parent.getRelativePoint(screenNode, Vec3(pt[0], 0, pt[1])))) 
+        screenNode.setScale(1.0/(aspect_ratio*self.winSizeX), 1.0, 1.0/self.winSizeY) 
+        screenNode.setTexScale(TextureStage.getDefault(), 1.0, -1.0)  
          
         return screenNode 
 
@@ -52,5 +48,6 @@ class PlayerHUD(object):
         spriteNP.setTexture(tex) 
         spriteNP.setPos(x, 0, z) 
         spriteNP.setScale(sx, 1.0, sz) 
-        spriteNP.setTransparency(transparent) 
+        spriteNP.setTransparency(transparent)
+         
         return spriteNP
