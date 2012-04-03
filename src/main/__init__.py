@@ -2,8 +2,7 @@ from pandac.PandaModules import *
 from direct.showbase.ShowBase import ShowBase
 import sys
 
-from CameraHandler import *       
-from InputHandler import *
+from CameraHandler import *
 from PlayerHUD import *    
 
 
@@ -15,9 +14,7 @@ class Main(ShowBase):
         self.camera.setPos(10,0,25)
         
         self.cameraHandler = CameraHandler(self)
-        
-        self.inputHandler = InputHandler(self)
-        self.inputHandler.setupFPSCameraInput()
+        self.cameraHandler.registerFPSCameraInput()
         
         # Disabling Panda's defauld cameraHandler
         self.disableMouse()

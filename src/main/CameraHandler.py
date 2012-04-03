@@ -10,6 +10,8 @@ class CameraHandler(object):
 
     def __init__(self, mainReference):
         self.mainRef = mainReference
+        
+        self.cameraTaskList = []
 
         # 'K' stands for constants
         self.cameraRotationSpeedH_K = 0.06
@@ -44,6 +46,22 @@ class CameraHandler(object):
         
         taskMgr.add(self.frameRateWatcher, "frameRateWatcher", priority=2)
         taskMgr.add(self.updateCamera, "updateCamera", priority=1)
+        
+    
+    def registerFPSCameraInput(self):
+        self.cameraTaskList.append( self.mainRef.accept("w", self.setMoveTowards, [True]) )
+        self.cameraTaskList.append( self.mainRef.accept("w-up", self.setMoveTowards, [False]) )
+        self.cameraTaskList.append( self.mainRef.accept("s", self.setMoveBackwards, [True]) )
+        self.cameraTaskList.append( self.mainRef.accept("s-up", self.setMoveBackwards, [False]) )
+        self.cameraTaskList.append( self.mainRef.accept("a", self.setMoveLeft, [True]) )
+        self.cameraTaskList.append( self.mainRef.accept("a-up", self.setMoveLeft, [False]) )
+        self.cameraTaskList.append( self.mainRef.accept("d", self.setMoveRight, [True]) )
+        self.cameraTaskList.append( self.mainRef.accept("d-up", self.setMoveRight, [False]) )
+        
+        
+    def unregisterFPSCameraInput(self):
+        while( not(self.cameraTaskList.empty()) ):
+            self.cameraTaskList.pop().remove()
         
                    
     # this setters triggers keyboard movement of our camera    
