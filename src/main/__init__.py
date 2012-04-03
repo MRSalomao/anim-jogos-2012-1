@@ -3,7 +3,8 @@ from direct.showbase.ShowBase import ShowBase
 import sys
 
 from CameraHandler import *       
-from InputHandler import *    
+from InputHandler import *
+from PlayerHUD import *    
 
 
 class Main(ShowBase):
@@ -99,6 +100,8 @@ class Main(ShowBase):
         self.accept('crosshairraycnode-into-student_chaircnode', collideStudentChairIn)
         self.accept('crosshairraycnode-out-student_chaircnode', collideStudentChairOut)
         
+        # initializing HUD
+        self.playerHUD = PlayerHUD(self)
         
 main = Main()
 # Starting mainLoop
