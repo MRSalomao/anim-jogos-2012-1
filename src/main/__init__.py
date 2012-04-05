@@ -1,5 +1,7 @@
 from pandac.PandaModules import *
 from direct.showbase.ShowBase import ShowBase
+from panda3d.ode import OdeWorld
+
 import sys
 
 from CameraHandler import *
@@ -10,6 +12,9 @@ class Main(ShowBase):
     def __init__(self):
         
         ShowBase.__init__(self)
+        
+        myWorld = OdeWorld()
+        myWorld.setGravity(0, 0, -9.81)
 
         self.camera.setPos(10,0,25)
         
@@ -59,6 +64,12 @@ class Main(ShowBase):
         self.pickerNode.addSolid(self.crosshairRay)
         self.pickerNode.setIntoCollideMask(BitMask32.allOff())
         base.cTrav.addCollider(self.crosshairNP, collisionHandler)
+        
+        # fog experiment
+        myFog = Fog("Mist")
+        myFog.setColor(0.6, 0.6, 0.6)
+        myFog.setExpDensity(0.0007)
+        render.setFog(myFog)
 
         # loading student_chair model
         # first off we gotta define the topmost node that should be a PandaNode wrapped into a nodepath - this is mandatory cos if we try to directly use the  Actornode defined below, we'll face inexpected behavior manipulating the object.
@@ -66,6 +77,50 @@ class Main(ShowBase):
         # we then need an ActorNode - this is required when playing with physics cos it got an interface suitable for this task while the usual nodepath ain't. Then we'll stick it to the main nodepath we'll put into the scene render node, wrapped into a nodepath of course.
         self.studentChairAN=ActorNode("chairactnode")
         self.studentChairANP=self.studentChairNP.attachNewNode(self.studentChairAN)
+        
+        self.testRoom = loader.loadModel("../../models/sala_teste")
+        self.testRoom.reparentTo(self.render)
+        self.testRoom.setPos(0, 0, -27)
+        self.testRoom.setScale(34, 34, 34)
+        
+        self.testRoom.ls()
+        
+        self.tex = loader.loadTexture("../../models/floorlm.png")
+        self.tsf = TextureStage('ts')
+        self.tsf.setMode(TextureStage.MModulate)
+        self.tsf.setTexcoordName("ul")      
+        self.floor = self.testRoom.getChild(0).getChild(0)
+        self.floor.setTexture(self.tsf, self.tex)
+        
+        self.tex = loader.loadTexture("../../models/floorlm.png")
+        self.tsf = TextureStage('ts')
+        self.tsf.setMode(TextureStage.MModulate)
+        self.tsf.setTexcoordName("ul")      
+        self.floor = self.testRoom.getChild(0).getChild(3)
+        self.floor.setTexture(self.tsf, self.tex)
+        
+        self.tex2 = loader.loadTexture("../../models/wall2lm.png")
+        self.tsw1 = TextureStage('ts1')
+        self.tsw1.setMode(TextureStage.MModulate)
+        self.tsw1.setTexcoordName("ul")      
+        self.wall1 = self.testRoom.getChild(0).getChild(4)
+        self.wall1.setTexture(self.tsw1, self.tex2)
+        
+        self.tex3 = loader.loadTexture("../../models/wall1lm.jpg")
+        self.tsf1 = TextureStage('ts2')
+        self.tsf1.setMode(TextureStage.MModulate)
+        self.tsf1.setTexcoordName("ul")      
+        self.floor = self.testRoom.getChild(0).getChild(2)
+        self.floor.setTexture(self.tsf1, self.tex3)
+        
+        self.tex4 = loader.loadTexture("../../models/floor2lm.png")
+        self.tsf2 = TextureStage('ts3')
+        self.tsf2.setMode(TextureStage.MModulate)
+        self.tsf2.setTexcoordName("ul")      
+        self.floor = self.testRoom.getChild(0).getChild(1)
+        self.floor.setTexture(self.tsf2, self.tex4)
+        
+        
         self.studentChairModel = loader.loadModel("../../models/student_chair")
         self.studentChairModel.reparentTo(self.studentChairANP)
         self.studentChairModel.setPos(-2, 25,50)

@@ -2,9 +2,7 @@ from pandac.PandaModules import *
 from main import *
 
 from math import *
-import time
-  
-from InputHandler import *    
+import time 
 
 class CameraHandler(object):
 
