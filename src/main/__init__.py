@@ -5,6 +5,7 @@ from panda3d.bullet import BulletPlaneShape
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
 from panda3d.bullet import BulletDebugNode
+from panda3d.bullet import BulletBoxShape
 
 import sys
 
@@ -129,6 +130,54 @@ class Main(ShowBase):
         world.attachRigidBody(self.bulletChairNode)
         self.studentChairModel.flattenLight()
         self.studentChairModel.reparentTo(np)
+        
+        # adding bullets when pressing left btn mouse
+        bullets = []
+        def removeBullet(task):
+            if len(bullets) < 1: return
+            
+            bulletNP = bullets.pop(0)
+            world.removeRigidBody(bulletNP.node())
+            
+            return task.done
+
+        def shootBullet():
+            # Get from/to points from mouse click
+            pMouse = base.mouseWatcherNode.getMouse()
+            pFrom = Point3()
+            pTo = Point3()
+            base.camLens.extrude(pMouse, pFrom, pTo)
+            
+            pFrom = render.getRelativePoint(base.cam, pFrom)
+            pTo = render.getRelativePoint(base.cam, pTo)
+            
+            # Calculate initial velocity
+            v = pTo - pFrom
+            v.normalize()
+            v *= 10000.0
+            
+            # Create bullet
+            shape = BulletBoxShape(Vec3(0.5, 0.5, 0.5))
+            body = BulletRigidBodyNode('Bullet')
+            bodyNP = render.attachNewNode(body)
+            bodyNP.node().addShape(shape)
+            bodyNP.node().setMass(0.001)
+            bodyNP.node().setLinearVelocity(v)
+            bodyNP.setPos(pFrom)
+            bodyNP.setCollideMask(BitMask32.allOn())
+            
+            # Enable CCD
+            bodyNP.node().setCcdMotionThreshold(1e-7)
+            bodyNP.node().setCcdSweptSphereRadius(0.50)
+            
+            world.attachRigidBody(bodyNP.node())
+            
+            # Remove the bullet again after 1 second
+            bullets.append(bodyNP)
+            taskMgr.doMethodLater(1, removeBullet, 'removeBullet')
+        
+        # adding the shoot event
+        self.accept("mouse1", shootBullet)
         
         # collision handler methods
         def collideStudentChairIn(entry):
