@@ -1,6 +1,5 @@
 from pandac.PandaModules import *
 from direct.showbase.ShowBase import ShowBase
-from panda3d.ode import OdeWorld
 
 import sys
 
@@ -12,9 +11,6 @@ class Main(ShowBase):
     def __init__(self):
         
         ShowBase.__init__(self)
-        
-        myWorld = OdeWorld()
-        myWorld.setGravity(0, 0, -9.81)
 
         self.camera.setPos(10,0,25)
         
