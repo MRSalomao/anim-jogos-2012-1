@@ -3,6 +3,8 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletPlaneShape
 from panda3d.bullet import BulletRigidBodyNode
+from panda3d.bullet import BulletConvexHullShape
+from panda3d.bullet import BulletDebugNode
 
 import sys
 
@@ -36,16 +38,25 @@ class Main(ShowBase):
         self.cTrav=CollisionTraverser()
         # here there is the handler to use this time to manage collisions.
         collisionHandler = CollisionHandlerEvent()
+        # Bullet debug purposes
+        debugNode = BulletDebugNode('Debug')
+        debugNode.showWireframe(True)
+        debugNode.showConstraints(True)
+        debugNode.showBoundingBoxes(False)
+        debugNode.showNormals(False)
+        debugNP = render.attachNewNode(debugNode)
+        debugNP.show()
         # initializing Bullet physics
         world = BulletWorld()
         world.setGravity(Vec3(0, 0, -9.81))
+        world.setDebugNode(debugNP.node())
         
         # plane - flat infinite plane surface
         shape = BulletPlaneShape(Vec3(0, 0, 1), 1)
         node = BulletRigidBodyNode('Ground')
         node.addShape(shape)
         np = render.attachNewNode(node)
-        np.setPos(0, 0, -2)
+        np.setPos(0, 0, -22)
         world.attachRigidBody(node)
         
         # adding collision node to our crosshair. Based on camera.
@@ -67,8 +78,6 @@ class Main(ShowBase):
         self.testRoom.reparentTo(self.render)
         self.testRoom.setPos(0, 0, -27)
         self.testRoom.setScale(34, 34, 34)
-        
-#        self.testRoom.ls()
         
         self.tex = loader.loadTexture("../../models/floorlm.png")
         self.tsf = TextureStage('ts')
@@ -106,16 +115,20 @@ class Main(ShowBase):
         self.floor.setTexture(self.tsf2, self.tex4)
         
         # loading student_chair model
-        self.studentChairNP=NodePath(PandaNode("phisicschair"))
         self.studentChairModel = loader.loadModel("../../models/student_chair")
-        self.studentChairModel.reparentTo(self.studentChairNP)
-        self.studentChairCollider = self.studentChairModel.attachNewNode(CollisionNode('student_chaircnode'))
-        self.studentChairCollider.node().addSolid(CollisionSphere(8, -5, 6, 10))
-        self.studentChairNP.setPos(-2, 25,5)
-        self.studentChairNP.setHpr(10.0,13.0,5.0)
-        self.studentChairNP.reparentTo(base.render)
-        # debug purposes - show collision solid
-#        self.studentChairCollider.show()
+        self.studentChairGeomNodes = self.studentChairModel.findAllMatches('**/+GeomNode')
+        self.studentChairGeomNode = self.studentChairGeomNodes.getPath(0).node()
+        self.studentChairGeom = self.studentChairGeomNode.getGeom(0)
+        self.studentChairBulletShape = BulletConvexHullShape()
+        self.studentChairBulletShape.addGeom(self.studentChairGeom)
+        self.bulletChairNode = BulletRigidBodyNode('studentchair')
+        self.bulletChairNode.setMass(1.0)
+        self.bulletChairNode.addShape(self.studentChairBulletShape)
+        np = render.attachNewNode(self.bulletChairNode)
+        np.setPos(0,0,-13)
+        world.attachRigidBody(self.bulletChairNode)
+        self.studentChairModel.flattenLight()
+        self.studentChairModel.reparentTo(np)
         
         # collision handler methods
         def collideStudentChairIn(entry):
