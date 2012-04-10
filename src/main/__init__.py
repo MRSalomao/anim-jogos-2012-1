@@ -1,5 +1,8 @@
 from pandac.PandaModules import *
 from direct.showbase.ShowBase import ShowBase
+from panda3d.bullet import BulletWorld
+from panda3d.bullet import BulletPlaneShape
+from panda3d.bullet import BulletRigidBodyNode
 
 import sys
 
@@ -12,12 +15,12 @@ class Main(ShowBase):
         
         ShowBase.__init__(self)
 
+        # camera
         self.camera.setPos(10,0,25)
-        
         self.cameraHandler = CameraHandler(self)
         self.cameraHandler.registerFPSCameraInput()
         
-        # Disabling Panda's defauld cameraHandler
+        # disabling Panda's defauld cameraHandler
         self.disableMouse()
         
         # fullscreen and hidden cursor
@@ -31,27 +34,19 @@ class Main(ShowBase):
 
         #** Collision system ignition - even if we're going to interact with the physics routines, the usual traverser is always in charge to drive collisions
         self.cTrav=CollisionTraverser()
-        # look here: we enable the particle system - this is the evidence of what I was saying above, because the panda physics engine is conceived mainly to manage particles.
-        self.enableParticles()
         # here there is the handler to use this time to manage collisions.
         collisionHandler = CollisionHandlerEvent()
-        # physical collisions
-        physicsHandler = PhysicsCollisionHandler()
+        # initializing Bullet physics
+        world = BulletWorld()
+        world.setGravity(Vec3(0, 0, -9.81))
         
-        #** This is how to define the gravity force to make our stuff fall down: first off we define a ForceNode and attach to the render, so that everything below will be affected by this force
-        globalforcesFN=ForceNode('world-forces')
-        globalforcesFNP=self.render.attachNewNode(globalforcesFN)
-        # then we set a linear force that will act in Z axis-drag-down-force of 9.81 units per second.
-        globalforcesGravity=LinearVectorForce(0,0,-9.81)
-        globalforcesFN.addForce(globalforcesGravity)
-        # and then we assign this force to the physics manager. By the way, we never defined that manager, but it was made automatically when we called base.enableParticles()
-        self.physicsMgr.addLinearForce(globalforcesGravity)
-        
-        #** This is the first time we see this collider: it is used mainly to define a flat infinite plane surface
-        cp = CollisionPlane(Plane(Vec3(0, 0, 1), Point3(0, 0, 0)))
-        planeNP = self.render.attachNewNode(CollisionNode('planecnode'))
-        planeNP.node().addSolid(cp)
-        planeNP.show()
+        # plane - flat infinite plane surface
+        shape = BulletPlaneShape(Vec3(0, 0, 1), 1)
+        node = BulletRigidBodyNode('Ground')
+        node.addShape(shape)
+        np = render.attachNewNode(node)
+        np.setPos(0, 0, -2)
+        world.attachRigidBody(node)
         
         # adding collision node to our crosshair. Based on camera.
         self.pickerNode=CollisionNode('crosshairraycnode')
@@ -67,19 +62,13 @@ class Main(ShowBase):
         myFog.setExpDensity(0.0007)
         render.setFog(myFog)
 
-        # loading student_chair model
-        # first off we gotta define the topmost node that should be a PandaNode wrapped into a nodepath - this is mandatory cos if we try to directly use the  Actornode defined below, we'll face inexpected behavior manipulating the object.
-        self.studentChairNP=NodePath(PandaNode("phisicschair"))
-        # we then need an ActorNode - this is required when playing with physics cos it got an interface suitable for this task while the usual nodepath ain't. Then we'll stick it to the main nodepath we'll put into the scene render node, wrapped into a nodepath of course.
-        self.studentChairAN=ActorNode("chairactnode")
-        self.studentChairANP=self.studentChairNP.attachNewNode(self.studentChairAN)
-        
+        # loading room
         self.testRoom = loader.loadModel("../../models/sala_teste")
         self.testRoom.reparentTo(self.render)
         self.testRoom.setPos(0, 0, -27)
         self.testRoom.setScale(34, 34, 34)
         
-        self.testRoom.ls()
+#        self.testRoom.ls()
         
         self.tex = loader.loadTexture("../../models/floorlm.png")
         self.tsf = TextureStage('ts')
@@ -116,20 +105,14 @@ class Main(ShowBase):
         self.floor = self.testRoom.getChild(0).getChild(1)
         self.floor.setTexture(self.tsf2, self.tex4)
         
-        
+        # loading student_chair model
+        self.studentChairNP=NodePath(PandaNode("phisicschair"))
         self.studentChairModel = loader.loadModel("../../models/student_chair")
-        self.studentChairModel.reparentTo(self.studentChairANP)
-        self.studentChairModel.setPos(-2, 25,50)
-        self.studentChairModel.setHpr(10.0,13.0,5.0)
+        self.studentChairModel.reparentTo(self.studentChairNP)
         self.studentChairCollider = self.studentChairModel.attachNewNode(CollisionNode('student_chaircnode'))
         self.studentChairCollider.node().addSolid(CollisionSphere(8, -5, 6, 10))
-        # now it's a good time to dip our object into the physics environment (the Actornode btw)
-        base.physicsMgr.attachPhysicalNode(self.studentChairAN)
-        # then tell to the PhysicsCollisionHandler what are its collider and main nodepath to handle - this means that the ballANP nodepath will be phisically moved to react to all the physics forces we applied in the environment (the gravity force in the specific). Note that due we are using a particular collison handler (PhysicsCollisionHandler) we cannot pass a common nodepath as we did in all the previous steps but a nodepath-wrapped Actornode.
-        physicsHandler.addCollider(self.studentChairCollider, self.studentChairANP)
-        # and inform the main traverser as well
-        base.cTrav.addCollider(self.studentChairCollider, physicsHandler)
-        # now the physic ball is ready to exit off the dispenser - Note we reparent it to render by default
+        self.studentChairNP.setPos(-2, 25,5)
+        self.studentChairNP.setHpr(10.0,13.0,5.0)
         self.studentChairNP.reparentTo(base.render)
         # debug purposes - show collision solid
 #        self.studentChairCollider.show()
@@ -151,6 +134,13 @@ class Main(ShowBase):
         # initializing HUD
         self.playerHUD = PlayerHUD(self)
         
+        # updating Bullet physics engine
+        def update(task):
+            dt = globalClock.getDt()
+            world.doPhysics(dt)
+            return task.cont
+        taskMgr.add(update, 'update')
+       
 main = Main()
 # Starting mainLoop
 main.run()
