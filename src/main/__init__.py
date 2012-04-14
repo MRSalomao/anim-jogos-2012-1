@@ -77,7 +77,7 @@ class Main(ShowBase):
         # loading h_208 room
         self.h208Room = loader.loadModel("../../models/model_h208/h_208")
         self.h208Room.reparentTo(self.render)
-        self.h208Room.setPos(0, 0, -27)
+        self.h208Room.setPos(0, 0, -35)
         self.h208Room.setScale(34, 34, 34)
 
         # loading room
@@ -129,10 +129,10 @@ class Main(ShowBase):
         self.studentChairBulletShape = BulletConvexHullShape()
         self.studentChairBulletShape.addGeom(self.studentChairGeom)
         self.bulletChairNode = BulletRigidBodyNode('studentchair')
-        self.bulletChairNode.setMass(1.0)
+        self.bulletChairNode.setMass(2.0)
         self.bulletChairNode.addShape(self.studentChairBulletShape)
         np = render.attachNewNode(self.bulletChairNode)
-        np.setPos(0,0,-13)
+        np.setPos(0,100,-10)
         world.attachRigidBody(self.bulletChairNode)
         self.studentChairModel.flattenLight()
         self.studentChairModel.reparentTo(np)
