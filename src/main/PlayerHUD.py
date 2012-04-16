@@ -16,6 +16,29 @@ class PlayerHUD(object):
         # crosshair init
         self.crosshairSprite = self.createSprite('../../textures/crosshair.png', self.winSizeX/2, self.winSizeY/2, 16, 16, 1) 
         self.crosshairSprite.reparentTo(sprites_root)
+
+#---Panda collision for our crosshair---Incomplete        
+#        # adding collision node to our crosshair. Based on camera.
+#        self.pickerNode=CollisionNode('crosshairraycnode')
+#        self.crosshairNP=base.camera.attachNewNode(self.pickerNode)
+#        self.crosshairRay=CollisionRay(Point3(0,0,0),Vec3(0,1,0))
+#        self.pickerNode.addSolid(self.crosshairRay)
+#        self.pickerNode.setIntoCollideMask(BitMask32.allOff())
+#        base.cTrav.addCollider(self.crosshairNP, collisionHandler)
+#        
+#        # collision handler methods
+#        def collideStudentChairIn(entry):
+#            print "colisao de entrada"
+#        def collideStudentChairOut(entry):
+#            print "colisao de saida"
+#        
+#        # adding a pattern - eases readability
+#        collisionHandler.addInPattern('%fn-into-%in')
+#        collisionHandler.addOutPattern('%fn-out-%in')
+#
+#        # accepting student chair collision
+#        self.accept('crosshairraycnode-into-student_chaircnode', collideStudentChairIn)
+#        self.accept('crosshairraycnode-out-student_chaircnode', collideStudentChairOut)
         
     def createSpritesNodeSetup(self): 
     
