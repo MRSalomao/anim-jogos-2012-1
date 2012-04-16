@@ -10,6 +10,7 @@ import sys
 from CameraHandler import *
 from PlayerHUD import *
 from Player import *
+from EnemyManager import *
 from Map import *   
 
 
@@ -19,7 +20,7 @@ class Main(ShowBase):
         ShowBase.__init__(self)
 
         # camera
-        self.camera.setPos(10,0,25)
+        self.camera.setPos(10,0,20)
         self.cameraHandler = CameraHandler(self)
         self.cameraHandler.registerFPSCameraInput()
         
@@ -34,6 +35,9 @@ class Main(ShowBase):
         
         # esc kills our game
         self.accept("escape",sys.exit)
+        
+        # activating fps
+        base.setFrameRateMeter(True)
 
         # Bullet debug purposes
         debugNode = BulletDebugNode('Debug')
@@ -70,6 +74,9 @@ class Main(ShowBase):
         
         # initializing player
         self.player = Player(self)
+        
+        # initializing enemy manager
+        self.enemyManager = EnemyManager(self)
         
         # initializing HUD
         self.playerHUD = PlayerHUD(self)
