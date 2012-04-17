@@ -1,4 +1,5 @@
 from direct.task import Task
+from panda3d.ai import *
 
 from Enemy import *
 
@@ -7,20 +8,26 @@ class EnemyManager(object):
     def __init__(self, mainReference):
         self.mainRef = mainReference
         
+        self.AIchar = []
+        self.AIbehaviors = []
         self.enemys = []
-        for i in range(30):
-            enemy = Enemy(self.mainRef)
+        for i in range(5):
+            enemy = Enemy(self.mainRef,'enemy'+str(i))
             enemy.hide()
             self.enemys.append(enemy)
-            enemy.setPos(10*i,5*1,2)
-        
+            enemy.setPos(-50*i,5,0)
+            
+            # creating pursue behavior
+            self.AIchar.append(AICharacter('seeker'+str(i),enemy.np, 50, 1, 6))
+            self.mainRef.AIworld.addAiChar(self.AIchar[i])
+            self.AIbehaviors.append(self.AIchar[i].getAiBehaviors())
+            self.AIbehaviors[i].pursue(self.mainRef.player.npPlayerCamBox)
+            
         def startInvasion(task):
-            for i in range(30):
+            for i in range(5):
                 enemy = self.enemys.__getitem__(i)
                 enemy.show()
             return task.done
 
         # start
-        taskMgr.doMethodLater(10.0, startInvasion, 'Start Invasion')
-            
-    
+        taskMgr.doMethodLater(5.0, startInvasion, 'Start Invasion')

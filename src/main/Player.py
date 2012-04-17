@@ -10,6 +10,13 @@ class Player(Creature):
         self.mainRef = mainReference
         super(Player, self).__init__(mainReference)
         
+        # player collision box
+        self.playerBulletNode = BulletRigidBodyNode('player')
+        self.playerBulletNode.addShape(BulletBoxShape(Vec3(10,10,10)))
+        self.np = self.mainRef.render.attachNewNode(self.playerBulletNode)
+        self.mainRef.world.attachRigidBody(self.playerBulletNode)
+        self.npPlayerCamBox = self.mainRef.camera.attachNewNode(self.playerBulletNode)
+        
         # adding bullets when pressing left btn mouse
         bullets = []
         def removeBullet(task):

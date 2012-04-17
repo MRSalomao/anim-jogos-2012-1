@@ -4,6 +4,7 @@ from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
 from panda3d.bullet import BulletDebugNode
+from panda3d.ai import *
 
 import sys
 
@@ -53,6 +54,9 @@ class Main(ShowBase):
         self.world.setGravity(Vec3(0, 0, -9.81))
         self.world.setDebugNode(debugNP.node())
         
+        #Creating AI World
+        self.AIworld = AIWorld(render)
+ 
         # initializing map
         self.map = Map(self)
         
@@ -87,7 +91,14 @@ class Main(ShowBase):
             self.world.doPhysics(dt)
             return task.cont
         taskMgr.add(update, 'update')
-       
+        
+        #to update the AIWorld    
+        def AIUpdate(task):
+            self.AIworld.update()            
+            return Task.cont
+        #AI World update        
+        taskMgr.add(AIUpdate,"AIUpdate")
+ 
 main = Main()
 # Starting mainLoop
 main.run()
