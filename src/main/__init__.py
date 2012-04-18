@@ -21,7 +21,7 @@ class Main(ShowBase):
         ShowBase.__init__(self)
 
         # camera
-        self.camera.setPos(10,0,20)
+        self.camera.setPos(0,0,-10)
         self.cameraHandler = CameraHandler(self)
         self.cameraHandler.registerFPSCameraInput()
         

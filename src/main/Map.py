@@ -1,6 +1,8 @@
 from pandac.PandaModules import *
 from panda3d.bullet import BulletPlaneShape
 from panda3d.bullet import BulletRigidBodyNode
+from panda3d.bullet import BulletTriangleMesh
+from panda3d.bullet import BulletTriangleMeshShape
 
 class Map(object):
     
@@ -16,8 +18,19 @@ class Map(object):
         # loading h_208 room
         self.h208Room = loader.loadModel("../../models/model_h208/h_208")
         self.h208Room.reparentTo(self.mainRef.render)
-        self.h208Room.setPos(0, 0, -35)
-        self.h208Room.setScale(34, 34, 34)
+        
+        # creating triangle meshes for all static nodes
+        self.staticH208Nodes = self.h208Room.find('**/static_nodes')
+        self.h208RoomNodes = self.staticH208Nodes.findAllMatches('**/+GeomNode')
+        for i in range( self.h208RoomNodes.getNumPaths()):
+            self.h208RoomGeomNode = self.h208RoomNodes.getPath(i).node()
+            self.h208RoomGeom = self.h208RoomGeomNode.getGeom(0)
+            self.h208RoomBulletMesh = BulletTriangleMesh()
+            self.h208RoomBulletMesh.addGeom(self.h208RoomGeom)
+            self.h208RoomBulletShape = BulletTriangleMeshShape(self.h208RoomBulletMesh, dynamic=False)
+            self.bulletH208RoomNode = BulletRigidBodyNode('h_208_node'+str(i))
+            self.bulletH208RoomNode.addShape(self.h208RoomBulletShape)
+            self.mainRef.world.attachRigidBody(self.bulletH208RoomNode)   
         
         # loading test room
         self.testRoom = loader.loadModel("../../models/sala_teste")
@@ -61,9 +74,9 @@ class Map(object):
         self.floor.setTexture(self.tsf2, self.tex4)
         
         # map physics plane - flat infinite plane surface
-        shape = BulletPlaneShape(Vec3(0, 0, 1), 1)
-        node = BulletRigidBodyNode('Ground')
-        node.addShape(shape)
-        np = render.attachNewNode(node)
-        np.setPos(0, 0, -22)
-        self.mainRef.world.attachRigidBody(node)
+#        shape = BulletPlaneShape(Vec3(0, 0, 1), 1)
+#        node = BulletRigidBodyNode('Ground')
+#        node.addShape(shape)
+#        np = render.attachNewNode(node)
+#        np.setPos(0, 0, -68)
+#        self.mainRef.world.attachRigidBody(node)
