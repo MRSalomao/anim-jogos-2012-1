@@ -1,24 +1,23 @@
 from pandac.PandaModules import *
-from main import *
 
 from math import *
 import time 
 
-class CameraHandler(object):
+class MovementHandler(object):
 
     def __init__(self, mainReference):
         self.mainRef = mainReference
         
-        self.cameraTaskList = []
+        self.movementTaskList = []
 
         # 'K' stands for constants
-        self.cameraRotationSpeedH_K = 0.06
+        self.cameraRotationSpeedH_K = 40.00
         self.cameraRotationSpeedP_K = 0.05
-        self.cameraMovementSpeed_K = 0.6
+        self.cameraMovementSpeed_K = 200.0
         
         # Rate at which the camera rotation/movement fades away
         self.rotationDamping_K = 0.65 
-        self.movementDamping_K = 0.8
+        self.movementDamping_K = 0.9
         
         self.moveTowards  = False
         self.moveBackwards = False
@@ -26,7 +25,7 @@ class CameraHandler(object):
         self.moveRight = False
         
         # Intended to avoid excessive processing of mouse/keyboard input
-        self.cameraLastUpdateTime = time.time()
+        self.movementLastUpdateTime = time.time()
         self.shouldUptade = True
         self.deltaTime = 0.0
         
@@ -39,27 +38,26 @@ class CameraHandler(object):
         self.cameraSpeedH = 0.0
         self.cameraSpeedP = 0.0
         
-        self.cameraMoveDirectionVec = Vec2(0.0, 0.0)
-        self.cameraMoveSpeedVec = Vec2(0.0, 0.0)
+        self.playerMoveSpeedVec = Vec3(0.0, 0.0, 0.0)
         
         taskMgr.add(self.frameRateWatcher, "frameRateWatcher", priority=2)
-        taskMgr.add(self.updateCamera, "updateCamera", priority=1)
+        taskMgr.add(self.updateMovement, "updateMovement", priority=1)
         
     
-    def registerFPSCameraInput(self):
-        self.cameraTaskList.append( self.mainRef.accept("w", self.setMoveTowards, [True]) )
-        self.cameraTaskList.append( self.mainRef.accept("w-up", self.setMoveTowards, [False]) )
-        self.cameraTaskList.append( self.mainRef.accept("s", self.setMoveBackwards, [True]) )
-        self.cameraTaskList.append( self.mainRef.accept("s-up", self.setMoveBackwards, [False]) )
-        self.cameraTaskList.append( self.mainRef.accept("a", self.setMoveLeft, [True]) )
-        self.cameraTaskList.append( self.mainRef.accept("a-up", self.setMoveLeft, [False]) )
-        self.cameraTaskList.append( self.mainRef.accept("d", self.setMoveRight, [True]) )
-        self.cameraTaskList.append( self.mainRef.accept("d-up", self.setMoveRight, [False]) )
+    def registerFPSMovementInput(self):
+        self.movementTaskList.append( self.mainRef.accept("w", self.setMoveTowards, [True]) )
+        self.movementTaskList.append( self.mainRef.accept("w-up", self.setMoveTowards, [False]) )
+        self.movementTaskList.append( self.mainRef.accept("s", self.setMoveBackwards, [True]) )
+        self.movementTaskList.append( self.mainRef.accept("s-up", self.setMoveBackwards, [False]) )
+        self.movementTaskList.append( self.mainRef.accept("a", self.setMoveLeft, [True]) )
+        self.movementTaskList.append( self.mainRef.accept("a-up", self.setMoveLeft, [False]) )
+        self.movementTaskList.append( self.mainRef.accept("d", self.setMoveRight, [True]) )
+        self.movementTaskList.append( self.mainRef.accept("d-up", self.setMoveRight, [False]) )
         
         
-    def unregisterFPSCameraInput(self):
-        while( not(self.cameraTaskList.empty()) ):
-            self.cameraTaskList.pop().remove()
+    def unregisterFPSMovementInput(self):
+        while( not(self.movementTaskList.empty()) ):
+            self.movementTaskList.pop().remove()
         
                    
     # this setters triggers keyboard movement of our camera    
@@ -74,47 +72,31 @@ class CameraHandler(object):
         
     def frameRateWatcher(self, task):
         # Here we try to maintain something around 60 updates/s
-        if (time.time() - self.cameraLastUpdateTime > .015):
-            self.deltaTime = time.time() - self.cameraLastUpdateTime
-            self.cameraLastUpdateTime = time.time()
-            self.shouldUptade = True
+        if (time.time() - self.movementLastUpdateTime > .015):
+            self.deltaTime = time.time() - self.movementLastUpdateTime
+            self.movementLastUpdateTime = time.time()
+        self.shouldUptade = True
             
         return task.cont 
             
         
-    def updateCamera(self, task): 
+    def updateMovement(self, task): 
         if (self.shouldUptade):  
-            if self.mainRef.mouseWatcherNode.hasMouse(): 
+            if self.mainRef.mouseWatcherNode.hasMouse():
                 
                 #    -Handle the keyboard events-
                 if(self.moveRight == True):
-                    self.cameraMoveDirectionVec.addX( sin(self.cameraH / 180 * pi + pi/2) )
-                    self.cameraMoveDirectionVec.addY(-cos(self.cameraH / 180 * pi + pi/2) )
-                    
+                    self.playerMoveSpeedVec.setX( self.cameraMovementSpeed_K )   
                 if(self.moveLeft == True):
-                    self.cameraMoveDirectionVec.addX(-sin(self.cameraH / 180 * pi + pi/2) )
-                    self.cameraMoveDirectionVec.addY( cos(self.cameraH / 180 * pi + pi/2) )
-                
+                    self.playerMoveSpeedVec.setX( -self.cameraMovementSpeed_K )
                 if(self.moveBackwards == True):
-                    self.cameraMoveDirectionVec.addX(-cos(self.cameraH / 180 * pi + pi/2) )
-                    self.cameraMoveDirectionVec.addY(-sin(self.cameraH / 180 * pi + pi/2) )
-                    
+                    self.playerMoveSpeedVec.setY( -self.cameraMovementSpeed_K )  
                 if(self.moveTowards == True): 
-                    self.cameraMoveDirectionVec.addX( cos(self.cameraH / 180 * pi + pi/2) )
-                    self.cameraMoveDirectionVec.addY( sin(self.cameraH / 180 * pi + pi/2) )
-            
-                self.cameraMoveDirectionVec.normalize()
+                    self.playerMoveSpeedVec.setY( self.cameraMovementSpeed_K )
+                        
+                self.mainRef.player.playerNode.setLinearMovement(self.playerMoveSpeedVec, True)
                 
-                self.cameraMoveSpeedVec += self.cameraMoveDirectionVec * self.cameraMovementSpeed_K
-                
-                self.mainRef.camera.setX(self.mainRef.camera.getX() + self.cameraMoveSpeedVec.getX())
-                self.mainRef.camera.setY(self.mainRef.camera.getY() + self.cameraMoveSpeedVec.getY())
-                
-                self.cameraMoveSpeedVec *= self.movementDamping_K
-                
-                self.cameraMoveDirectionVec.set(0.0, 0.0)
-                
-                
+                self.playerMoveSpeedVec *= self.movementDamping_K
                 
                 #    -Handle the mouse events-
                 props = self.mainRef.win.getProperties() 
@@ -134,8 +116,6 @@ class CameraHandler(object):
                 
                 self.cameraSpeedH *= self.rotationDamping_K
                 self.cameraSpeedP *= self.rotationDamping_K       
-                
-#                print(self.cameraH, self.cameraP)
                  
                 # Just preventing the camera's 'R' from making it point to top or bottom
                 if(self.cameraP > 89.9): 
@@ -143,7 +123,10 @@ class CameraHandler(object):
                 if(self.cameraP < -89.9): 
                     self.cameraP = -89.9 
                      
-                self.mainRef.camera.setHpr(self.cameraH, self.cameraP, 0)
+                self.mainRef.camera.setHpr(0, self.cameraP, 0)
+                
+                # player character angulation
+                self.mainRef.player.playerNode.setAngularMovement(self.cameraSpeedH)
         
                 # This should prevent mouse from going outside of the window
                 self.mainRef.win.movePointer(0, winSizeX/2, winSizeY/2)

@@ -7,8 +7,6 @@ from panda3d.bullet import BulletDebugNode
 from panda3d.ai import *
 
 import sys
-
-from CameraHandler import *
 from PlayerHUD import *
 from Player import *
 from EnemyManager import *
@@ -22,12 +20,7 @@ class Main(ShowBase):
 
         # disabling Panda's default cameraHandler
         self.disableMouse()
-        
-        # setting our cameraHandler
-        self.camera.setPos(0,0,-10)
-        self.cameraHandler = CameraHandler(self)
-        self.cameraHandler.registerFPSCameraInput()        
-        
+                
         # fullscreen and hidden cursor
         wp = WindowProperties() 
 #        wp.setFullscreen(True) 
@@ -53,6 +46,15 @@ class Main(ShowBase):
         self.world = BulletWorld()
         self.world.setGravity(Vec3(0, 0, -9.81))
         self.world.setDebugNode(debugNP.node())
+
+        # on/off debug mode
+        def toggleDebug():
+            if debugNP.isHidden():
+                debugNP.show()
+            else:
+                debugNP.hide()
+        
+        self.accept('f1', toggleDebug)
         
         #Creating AI World
         self.AIworld = AIWorld(render)
@@ -76,13 +78,8 @@ class Main(ShowBase):
         self.studentChairModel.flattenLight()
         self.studentChairModel.reparentTo(np)
         
-#        self.enemyModel = Actor("../../models/model_zombie/zombie")
-#        self.enemyModel.setScale(20,20,20)
-#        self.enemyModel.reparentTo(self.render)
-#        self.enemyModel.loop("walk")
-        
         # initializing player
-        self.player = Player(self)
+        self.player = Player(self)       
         
         # initializing enemy manager
         self.enemyManager = EnemyManager(self)

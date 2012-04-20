@@ -1,8 +1,13 @@
 from pandac.PandaModules import *
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletBoxShape
+from panda3d.bullet import BulletCharacterControllerNode
+from panda3d.bullet import BulletCapsuleShape
+from panda3d.bullet import ZUp
+
 
 from Creature import *
+from MovementHandler import *
 
 class Player(Creature):
     
@@ -10,13 +15,22 @@ class Player(Creature):
         self.mainRef = mainReference
         super(Player, self).__init__(mainReference)
         
-        # player collision box
-        self.playerBulletNode = BulletRigidBodyNode('player')
-        self.playerBulletNode.addShape(BulletBoxShape(Vec3(10,10,10)))
-        self.np = self.mainRef.render.attachNewNode(self.playerBulletNode)
-        self.mainRef.world.attachRigidBody(self.playerBulletNode)
-        self.npPlayerCamBox = self.mainRef.camera.attachNewNode(self.playerBulletNode)
+        # setting our bullet character node
+        self.characterCapsuleHeight = 50
+        self.characterCapsuleRadius = 4
+        shape = BulletCapsuleShape(self.characterCapsuleRadius, self.characterCapsuleHeight, ZUp)
         
+        self.playerNode = BulletCharacterControllerNode(shape, 0.4, 'Player')
+        self.playerNP = self.mainRef.render.attachNewNode(self.playerNode)
+        self.playerNP.setCollideMask(BitMask32.allOn())
+        self.mainRef.world.attachCharacter(self.playerNP.node())
+        self.mainRef.camera.reparentTo(self.playerNP)
+        self.mainRef.camera.setPos(0,0,20)
+        
+        # setting our movementHandler
+        self.movementHandler = MovementHandler(self.mainRef)
+        self.movementHandler.registerFPSMovementInput() 
+
         # adding bullets when pressing left btn mouse
         bullets = []
         def removeBullet(task):
@@ -64,3 +78,4 @@ class Player(Creature):
             
         # adding the shoot event
         self.mainRef.accept("mouse1", shootBullet)
+        

@@ -21,7 +21,7 @@ class EnemyManager(object):
             self.AIchar.append(AICharacter('seeker'+str(i),enemy.np, 50, 1, 6))
             self.mainRef.AIworld.addAiChar(self.AIchar[i])
             self.AIbehaviors.append(self.AIchar[i].getAiBehaviors())
-            self.AIbehaviors[i].pursue(self.mainRef.player.npPlayerCamBox)
+            self.AIbehaviors[i].pursue(self.mainRef.player.playerNP)
             
         def startInvasion(task):
             for i in range(5):
