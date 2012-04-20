@@ -50,8 +50,13 @@ class Player(Creature):
             
             pFrom = render.getRelativePoint(base.cam, pFrom)
             pTo = render.getRelativePoint(base.cam, pTo)
+
+            direction = pFrom - pTo
+            direction.normalize()
+            result = self.mainRef.world.rayTestClosest(pFrom, pFrom+direction*1000)
+            self.mainRef.enemyManager.handleShot(result)
             
-            # Calculate initial velocity
+            """# Calculate initial velocity
             v = pTo - pFrom
             v.normalize()
             v *= 10000.0
@@ -75,7 +80,7 @@ class Player(Creature):
             # Remove the bullet again after 1 second
             bullets.append(bodyNP)
             taskMgr.doMethodLater(1, removeBullet, 'removeBullet')
-            
+            """
         # adding the shoot event
-        self.mainRef.accept("mouse1", shootBullet)
+        self.mainRef.accept("mouse3", shootBullet)
         

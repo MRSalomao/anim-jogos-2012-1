@@ -12,6 +12,9 @@ class Enemy(Creature):
     def __init__(self, mainReference, name):
         self.mainRef = mainReference
         
+        # Hit Points of each part of zombie
+        self.hitPoints = {'head':20,'leg_lr':30, 'leg_ll':30, 'arm_lr':30, 'arm_ll':30}
+        
         # load our zombie
         self.enemyModel = Actor("../../models/model_zombie/zombie")
         
@@ -53,10 +56,11 @@ class Enemy(Creature):
         self.enemyModel.setZ(-60)  
         
 
-        self.enemyBulletShape = BulletBoxShape(Vec3(12,12,12))
+        self.enemyBulletShape = BulletBoxShape(Vec3(12,12,20))
         self.enemyBulletNode = BulletRigidBodyNode(name)
         self.enemyBulletNode.addShape(self.enemyBulletShape)
         self.np = self.mainRef.render.attachNewNode(self.enemyBulletNode)
+        self.np.setZ(self.np.getZ()-10)
         self.mainRef.world.attachRigidBody(self.enemyBulletNode)
         self.enemyModel.reparentTo(self.np)
         self.enemyModel.loop("walk")
@@ -72,3 +76,8 @@ class Enemy(Creature):
         
     def setPos(self,x,y,z):
         self.np.setPos(x,y,z)
+        
+    def destroy(self):
+        self.enemyModel.unload()
+        self.enemyBB.unload()
+        self.np.detachNode()
