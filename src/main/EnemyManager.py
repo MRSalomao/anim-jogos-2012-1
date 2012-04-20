@@ -13,7 +13,7 @@ class EnemyManager(object):
         self.enemys = []
         for i in range(5):
             enemy = Enemy(self.mainRef,'enemy'+str(i))
-            enemy.hide()
+#            enemy.hide()
             self.enemys.append(enemy)
             enemy.setPos(-50*i,5,0)
             
@@ -25,9 +25,9 @@ class EnemyManager(object):
             
         def startInvasion(task):
             for i in range(5):
-                enemy = self.enemys.__getitem__(i)
+                enemy = self.enemys[i]
                 enemy.show()
             return task.done
 
         # start
-        taskMgr.doMethodLater(5.0, startInvasion, 'Start Invasion')
+#        taskMgr.doMethodLater(2.0, startInvasion, 'Start Invasion')

@@ -20,13 +20,13 @@ class Main(ShowBase):
         
         ShowBase.__init__(self)
 
-        # camera
+        # disabling Panda's default cameraHandler
+        self.disableMouse()
+        
+        # setting our cameraHandler
         self.camera.setPos(0,0,-10)
         self.cameraHandler = CameraHandler(self)
-        self.cameraHandler.registerFPSCameraInput()
-        
-        # disabling Panda's defauld cameraHandler
-        self.disableMouse()
+        self.cameraHandler.registerFPSCameraInput()        
         
         # fullscreen and hidden cursor
         wp = WindowProperties() 
@@ -75,6 +75,11 @@ class Main(ShowBase):
         self.world.attachRigidBody(self.bulletChairNode)
         self.studentChairModel.flattenLight()
         self.studentChairModel.reparentTo(np)
+        
+#        self.enemyModel = Actor("../../models/model_zombie/zombie")
+#        self.enemyModel.setScale(20,20,20)
+#        self.enemyModel.reparentTo(self.render)
+#        self.enemyModel.loop("walk")
         
         # initializing player
         self.player = Player(self)
