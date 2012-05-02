@@ -51,36 +51,38 @@ class Player(Creature):
             pFrom = render.getRelativePoint(base.cam, pFrom)
             pTo = render.getRelativePoint(base.cam, pTo)
 
-            direction = pFrom - pTo
+            direction = pTo - pFrom
             direction.normalize()
-            result = self.mainRef.world.rayTestClosest(pFrom, pFrom+direction*1000)
-            self.mainRef.enemyManager.handleShot(result)
+            result = self.mainRef.world.rayTestAll(pFrom, pFrom+direction*1000)
+            if (result.hasHits()):
+                self.mainRef.enemyManager.handleShot(result)
             
-            """# Calculate initial velocity
-            v = pTo - pFrom
-            v.normalize()
-            v *= 10000.0
+            # uncomment for projectile collision
+#            # Calculate initial velocity
+#            v = pTo - pFrom
+#            v.normalize()
+#            v *= 10000.0
+#            
+#            # Create bullet
+#            shape = BulletBoxShape(Vec3(0.5, 0.5, 0.5))
+#            body = BulletRigidBodyNode('Bullet')
+#            bodyNP = render.attachNewNode(body)
+#            bodyNP.node().addShape(shape)
+#            bodyNP.node().setMass(0.001)
+#            bodyNP.node().setLinearVelocity(v)
+#            bodyNP.setPos(pFrom)
+#            bodyNP.setCollideMask(BitMask32.allOn())
+#            
+#            # Enable CCD
+#            bodyNP.node().setCcdMotionThreshold(1e-7)
+#            bodyNP.node().setCcdSweptSphereRadius(0.50)
+#            
+#            self.mainRef.world.attachRigidBody(bodyNP.node())
+#            
+#            # Remove the bullet again after 1 second
+#            bullets.append(bodyNP)
+#            taskMgr.doMethodLater(1, removeBullet, 'removeBullet')
             
-            # Create bullet
-            shape = BulletBoxShape(Vec3(0.5, 0.5, 0.5))
-            body = BulletRigidBodyNode('Bullet')
-            bodyNP = render.attachNewNode(body)
-            bodyNP.node().addShape(shape)
-            bodyNP.node().setMass(0.001)
-            bodyNP.node().setLinearVelocity(v)
-            bodyNP.setPos(pFrom)
-            bodyNP.setCollideMask(BitMask32.allOn())
-            
-            # Enable CCD
-            bodyNP.node().setCcdMotionThreshold(1e-7)
-            bodyNP.node().setCcdSweptSphereRadius(0.50)
-            
-            self.mainRef.world.attachRigidBody(bodyNP.node())
-            
-            # Remove the bullet again after 1 second
-            bullets.append(bodyNP)
-            taskMgr.doMethodLater(1, removeBullet, 'removeBullet')
-            """
         # adding the shoot event
-        self.mainRef.accept("mouse3", shootBullet)
+        self.mainRef.accept("mouse1", shootBullet)
         

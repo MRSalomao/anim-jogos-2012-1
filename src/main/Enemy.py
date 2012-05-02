@@ -12,15 +12,20 @@ class Enemy(Creature):
     def __init__(self, mainReference, name):
         self.mainRef = mainReference
         
+        #unique enemy name
+        self.name = name
+        
         # Hit Points of each part of zombie
-        self.hitPoints = {'head':20,'leg_lr':30, 'leg_ll':30, 'arm_lr':30, 'arm_ll':30}
+        self.hitPoints = {'leg_lr':2, 'leg_ll':2, 'arm_lr':2, 'arm_ll':2}
+        self.lifePoints = 100
         
         # load our zombie
         self.enemyModel = Actor("../../models/model_zombie/zombie")
         
         # load the zombie's bounding boxes
         self.enemyBB = loader.loadModel("../../models/model_zombie/zombieBB")
-                
+        
+        global bodyParts      
         bodyParts = ['head', 'leg_ur', 'leg_ul', 'leg_lr', 'leg_ll', 'torso', 'arm_ur', 'arm_ul', 'arm_lr', 'arm_ll']
                 
         # getting 1 by 1 and attaching them to their corresponding bones     
@@ -56,11 +61,11 @@ class Enemy(Creature):
         self.enemyModel.setZ(-60)  
         
 
-        self.enemyBulletShape = BulletBoxShape(Vec3(12,12,20))
+        self.enemyBulletShape = BulletBoxShape(Vec3(20,40,40))
         self.enemyBulletNode = BulletRigidBodyNode(name)
         self.enemyBulletNode.addShape(self.enemyBulletShape)
         self.np = self.mainRef.render.attachNewNode(self.enemyBulletNode)
-        self.np.setZ(self.np.getZ()-10)
+        self.np.setPos(self.np.getZ()-10)
         self.mainRef.world.attachRigidBody(self.enemyBulletNode)
         self.enemyModel.reparentTo(self.np)
         self.enemyModel.loop("walk")
@@ -78,6 +83,6 @@ class Enemy(Creature):
         self.np.setPos(x,y,z)
         
     def destroy(self):
-        self.enemyModel.unload()
-        self.enemyBB.unload()
+#        self.enemyModel.unload()
+#        self.enemyBB.unload()
         self.np.detachNode()
