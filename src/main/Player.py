@@ -15,6 +15,9 @@ class Player(Creature):
         self.mainRef = mainReference
         super(Player, self).__init__(mainReference)
         
+        # setting player HP
+        self.healthPoints = 100
+        
         # setting our bullet character node
         self.characterCapsuleHeight = 50
         self.characterCapsuleRadius = 4
@@ -23,6 +26,9 @@ class Player(Creature):
         self.playerNode = BulletCharacterControllerNode(shape, 0.4, 'Player')
         self.playerNP = self.mainRef.render.attachNewNode(self.playerNode)
         self.playerNP.setCollideMask(BitMask32.allOn())
+        # test purposes
+        self.playerNP.setPos(-7.9281,8.211,0)
+        #
         self.mainRef.world.attachCharacter(self.playerNP.node())
         self.mainRef.camera.reparentTo(self.playerNP)
         self.mainRef.camera.setPos(0,0,20)

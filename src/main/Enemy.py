@@ -7,6 +7,11 @@ from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
 from panda3d.bullet import BulletDebugNode
 
+from pathfind.PathPoint import *
+from pathfind import *
+
+import sys
+
 class Enemy(Creature):
     
     def __init__(self, mainReference, name):
@@ -14,6 +19,9 @@ class Enemy(Creature):
         
         #unique enemy name
         self.name = name
+        
+        # path point as spawn point
+        self.spawnP = None
         
         # Hit Points of each part of zombie
         self.hitPoints = {'leg_lr':2, 'leg_ll':2, 'arm_lr':2, 'arm_ll':2}
@@ -81,6 +89,37 @@ class Enemy(Creature):
         
     def setPos(self,x,y,z):
         self.np.setPos(x,y,z)
+        
+    def pursue(self,AIworld, pathPoints, playerWorldPos, xPosInterval,yPosInterval,zPosInterval):
+        # getting player positioning and assigning the closest grid point
+        playerPX = playerWorldPos.getX()
+        playerPY = playerWorldPos.getY()
+        playerPZ = playerWorldPos.getZ()
+        playerPathPoint = PathPoint(playerPX,playerPY,playerPZ)
+        currSquaredDist = sys.float_info.max
+        minSquaredDist = sys.float_info.max
+        bestGridPoint = None
+        for i in range(len(pathPoints)):
+            point = pathPoints[i]
+            currSquaredDist = playerPathPoint.getDistanceSquared(point)
+            if (minSquaredDist == sys.float_info.max):
+                minSquaredDist = playerPathPoint.getDistanceSquared(point)
+                bestGridPoint = point
+            if (currSquaredDist < minSquaredDist):
+                minSquaredDist = currSquaredDist
+                bestGridPoint = point
+        bestGridPoint # this point is the goal point for our PathFinder
+        
+        # testing path find
+        self.pFinder = PathFinder(AIworld, self.spawnP, 
+                                  PathPoint(bestGridPoint.X,bestGridPoint.Y,bestGridPoint.Z,None,bestGridPoint.gridPosX,bestGridPoint.gridPosY,bestGridPoint.gridPosZ),
+                                  pathPoints , xPosInterval, yPosInterval, zPosInterval)
+        crumb = self.pFinder.node
+        while (crumb != None):
+            # debug purposes
+#            print crumb.point
+            self.np.setPos(Point3(crumb.point.X,crumb.point.Y,crumb.point.Z))
+            crumb = crumb.next
         
     def destroy(self):
 #        self.enemyModel.unload()

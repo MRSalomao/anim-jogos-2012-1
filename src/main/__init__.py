@@ -4,7 +4,7 @@ from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
 from panda3d.bullet import BulletDebugNode
-from panda3d.ai import *
+from pathfind import *
 
 import sys
 from PlayerHUD import *
@@ -55,12 +55,11 @@ class Main(ShowBase):
                 debugNP.hide()
         
         self.accept('f1', toggleDebug)
-        
+
+######### Old pursue code        
         #Creating AI World
-        self.AIworld = AIWorld(render)
- 
-        # initializing map
-        self.map = Map(self)
+#        self.AIworld = PathWorld(10,10,10)
+#########
         
         # loading student_chair model
         self.studentChairModel = loader.loadModel("../../models/student_chair")
@@ -81,6 +80,9 @@ class Main(ShowBase):
         # initializing player
         self.player = Player(self)       
         
+        # initializing map
+        self.map = Map(self)
+        
         # initializing enemy manager
         self.enemyManager = EnemyManager(self)
         
@@ -93,14 +95,16 @@ class Main(ShowBase):
             self.world.doPhysics(dt)
             return task.cont
         taskMgr.add(update, 'update')
-        
+
+######### Old pursue code      
         #to update the AIWorld    
-        def AIUpdate(task):
-            self.AIworld.update()            
-            return Task.cont
+#        def AIUpdate(task):
+#            self.AIworld.update()            
+#            return Task.cont
         #AI World update        
-        taskMgr.add(AIUpdate,"AIUpdate")
- 
+#        taskMgr.add(AIUpdate,"AIUpdate")
+#########
+
 main = Main()
 # Starting mainLoop
 main.run()
