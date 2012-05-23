@@ -10,7 +10,7 @@ from PathPoint import *
 
 class World(object):
             
-    # Note: we use Y as height and Z as depth here!
+    # Note: we use Z as height and Y as depth here!
     def Left(self):
         return 0
     def Right(self):
@@ -18,16 +18,16 @@ class World(object):
     def Bottom(self): 
         return 0
     def Top(self):
-        return len(self.worldBlocked[0])
+        return len(self.worldBlocked[0][0])
     def Front(self):
         return 0
     def Back(self):
-        return len(self.worldBlocked[0][0])
+        return len(self.worldBlocked[0])
 
     ## Creates a 3D world
     # for a 2D world assign depth value to 1
-    def __init__(self, width, height, depth):  
-        self.worldBlocked = [ [ [True]*depth ]*height ]*width  # extremely simple world where each node can be free or blocked: true=blocked
+    def __init__(self, width, depth, height):  
+        self.worldBlocked = [ [ [True]*height ]*depth ]*width  # extremely simple world where each node can be free or blocked: true=blocked
 
     ## Mark positions in the world as blocked (true) or unblocked (false)
     # parameter value: use true if you wan't to block the value

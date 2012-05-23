@@ -20,17 +20,17 @@ class Path_Finder(object):
         
         # Neighbour options
         self.surrounding = [                        
-            # Top slice (Y=1)
+            # Top slice (Z=1)
             PathPoint(-xInterval,yInterval,zInterval,None,-1,1,1), PathPoint(0,yInterval,zInterval,None,0,1,1), PathPoint(xInterval,yInterval,zInterval,None,1,1,1),
-            PathPoint(-xInterval,yInterval,0,None,-1,1,0), PathPoint(0,yInterval,0,None,0,1,0), PathPoint(xInterval,yInterval,0,None,1,1,0),
-            PathPoint(-xInterval,yInterval,-zInterval,None,-1,1,-1), PathPoint(0,yInterval,-zInterval,None,0,1,-1), PathPoint(xInterval,yInterval,-zInterval,None,1,1,-1),
-            # Middle slice (Y=0)
             PathPoint(-xInterval,0,zInterval,None,-1,0,1), PathPoint(0,0,zInterval,None,0,0,1), PathPoint(xInterval,0,zInterval,None,1,0,1),
+            PathPoint(-xInterval,-yInterval,zInterval ,None,-1,-1,1), PathPoint(0,-yInterval,zInterval,None,0,-1,1), PathPoint(xInterval,-yInterval,zInterval,None,1,-1,1),
+            # Middle slice (Z=0)
+            PathPoint(-xInterval,yInterval,0,None,-1,1,0), PathPoint(0,yInterval,0,None,0,1,0), PathPoint(xInterval,yInterval,0,None,1,1,0),
             PathPoint(-xInterval,0,0,None,-1,0,0), PathPoint(xInterval,0,0,None,1,0,0), # (0,0,0) is self
-            PathPoint(-xInterval,0,-zInterval,None,-1,0,-1), PathPoint(0,0,-zInterval,None,0,0,-1), PathPoint(xInterval,0,-zInterval,None,1,0,-1),
-            # Bottom slice (Y=-1)
-            PathPoint(-xInterval,-yInterval,zInterval,None,-1,-1,1), PathPoint(0,-yInterval,zInterval,None,0,-1,1), PathPoint(xInterval,-yInterval,zInterval,None,1,-1,1),
             PathPoint(-xInterval,-yInterval,0,None,-1,-1,0), PathPoint(0,-yInterval,0,None,0,-1,0), PathPoint(xInterval,-yInterval,0,None,1,-1,0),
+            # Bottom slice (Z=-1)
+            PathPoint(-xInterval,yInterval,-zInterval,None,-1,1,-1), PathPoint(0,yInterval,-zInterval,None,0,1,-1), PathPoint(xInterval,yInterval,-zInterval,None,1,1,-1),
+            PathPoint(-xInterval,0,-zInterval,None,-1,0,-1), PathPoint(0,0,-zInterval,None,0,0,-1), PathPoint(xInterval,0,-zInterval,None,1,0,-1),
             PathPoint(-xInterval,-yInterval,-zInterval,None,-1,-1,-1), PathPoint(0,-yInterval,-zInterval,None,0,-1,-1), PathPoint(xInterval,-yInterval,-zInterval,None,1,-1,-1)            
         ]
         
@@ -42,7 +42,7 @@ class Path_Finder(object):
     def FindPathReversed(self, world, start, end, preCrumbsList):
         self.openList = MinHeap(256)
         
-        self.brWorld = [ [ [ None for i in range(world.Back() ) ] for j in range(world.Top() ) ] for k in range(world.Right() )]
+        self.brWorld = [ [ [ None for i in range(world.Top() ) ] for j in range(world.Back() ) ] for k in range(world.Right() )]
         
         # initializing crumbs
         for i in range(len(preCrumbsList)):
@@ -73,7 +73,7 @@ class Path_Finder(object):
             for i in range(len(self.surrounding)):
                 self.tmp = self.current.point + self.surrounding[i]
                 
-                if ( (self.tmp.gridPosX <= (world.Right() -1)) and (self.tmp.gridPosY <= (world.Top() -1)) and (self.tmp.gridPosZ <= (world.Back() -1)) ):
+                if ( (self.tmp.gridPosX <= (world.Right() -1)) and (self.tmp.gridPosY <= (world.Back() -1)) and (self.tmp.gridPosZ <= (world.Top() -1)) ):
                     if (world.PositionIsFree(self.tmp)):
                         # Check if we've already examined a neighbour, if not create a new node for it.
                         if (self.brWorld[self.tmp.gridPosX][ self.tmp.gridPosY][ self.tmp.gridPosZ] == None):
