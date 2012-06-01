@@ -18,20 +18,26 @@ class Player(Creature):
         # setting player HP
         self.healthPoints = 100
         
+        # fine tuning the camera properties
+        self.mainRef.camLens.setFov(50)
+        self.mainRef.camLens.setNear(0.02)
+        self.mainRef.camLens.setFar(80.0)
+        
         # setting our bullet character node
-        self.characterCapsuleHeight = 50
-        self.characterCapsuleRadius = 4
+        self.characterCapsuleHeight = 1.6
+        self.characterCapsuleRadius = .4
         shape = BulletCapsuleShape(self.characterCapsuleRadius, self.characterCapsuleHeight, ZUp)
         
         self.playerNode = BulletCharacterControllerNode(shape, 0.4, 'Player')
+#        self.playerNode.setGravity(.01)
         self.playerNP = self.mainRef.render.attachNewNode(self.playerNode)
         self.playerNP.setCollideMask(BitMask32.allOn())
         # test purposes
-        self.playerNP.setPos(-7.9281,8.211,0)
+        self.playerNP.setPos(0.1, 0.1, 10)
         #
         self.mainRef.world.attachCharacter(self.playerNP.node())
         self.mainRef.camera.reparentTo(self.playerNP)
-        self.mainRef.camera.setPos(0,0,20)
+        self.mainRef.camera.setPos(0, 0, 0.8)
         
         # setting our movementHandler
         self.movementHandler = MovementHandler(self.mainRef)

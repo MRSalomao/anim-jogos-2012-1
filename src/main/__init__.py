@@ -1,10 +1,12 @@
 from pandac.PandaModules import *
+from direct.filter.CommonFilters import CommonFilters
 from direct.showbase.ShowBase import ShowBase
 from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
 from panda3d.bullet import BulletDebugNode
 from pathfind import *
+
 
 import sys
 from PlayerHUD import *
@@ -84,7 +86,7 @@ class Main(ShowBase):
         self.map = Map(self)
         
         # initializing enemy manager
-        self.enemyManager = EnemyManager(self)
+#        self.enemyManager = EnemyManager(self)
         
         # initializing HUD
         self.playerHUD = PlayerHUD(self)

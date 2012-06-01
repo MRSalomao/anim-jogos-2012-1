@@ -11,13 +11,13 @@ class MovementHandler(object):
         self.movementTaskList = []
 
         # 'K' stands for constants
-        self.cameraRotationSpeedH_K = 40.00
-        self.cameraRotationSpeedP_K = 0.05
-        self.cameraMovementSpeed_K = 200.0
+        self.cameraRotationSpeedH_K = 3.30
+        self.cameraRotationSpeedP_K = 0.03
+        self.cameraMovementSpeed_K = 2.0
         
         # Rate at which the camera rotation/movement fades away
-        self.rotationDamping_K = 0.65 
-        self.movementDamping_K = 0.9
+        self.rotationDamping_K = 0.65
+        self.movementDamping_K = 0.65
         
         self.moveTowards  = False
         self.moveBackwards = False
@@ -38,6 +38,7 @@ class MovementHandler(object):
         self.cameraSpeedH = 0.0
         self.cameraSpeedP = 0.0
         
+        self.playerMoveAccelerationVec = Vec3(0.0, 0.0, 0.0)
         self.playerMoveSpeedVec = Vec3(0.0, 0.0, 0.0)
         
         taskMgr.add(self.frameRateWatcher, "frameRateWatcher", priority=2)
@@ -75,7 +76,7 @@ class MovementHandler(object):
         if (time.time() - self.movementLastUpdateTime > .015):
             self.deltaTime = time.time() - self.movementLastUpdateTime
             self.movementLastUpdateTime = time.time()
-        self.shouldUptade = True
+            self.shouldUptade = True
             
         return task.cont 
             
@@ -86,17 +87,23 @@ class MovementHandler(object):
                 
                 #    -Handle the keyboard events-
                 if(self.moveRight == True):
-                    self.playerMoveSpeedVec.setX( self.cameraMovementSpeed_K )   
+                    self.playerMoveAccelerationVec.setX( 1.0 )   
                 if(self.moveLeft == True):
-                    self.playerMoveSpeedVec.setX( -self.cameraMovementSpeed_K )
+                    self.playerMoveAccelerationVec.setX( -1.0 )
                 if(self.moveBackwards == True):
-                    self.playerMoveSpeedVec.setY( -self.cameraMovementSpeed_K )  
+                    self.playerMoveAccelerationVec.setY( -1.0 )  
                 if(self.moveTowards == True): 
-                    self.playerMoveSpeedVec.setY( self.cameraMovementSpeed_K )
+                    self.playerMoveAccelerationVec.setY( 1.0 )
+                    
+                self.playerMoveAccelerationVec.normalize()
+                self.playerMoveAccelerationVec *= self.cameraMovementSpeed_K
+                
+                self.playerMoveSpeedVec += self.playerMoveAccelerationVec
+                self.playerMoveSpeedVec *= self.movementDamping_K
                         
                 self.mainRef.player.playerNode.setLinearMovement(self.playerMoveSpeedVec, True)
                 
-                self.playerMoveSpeedVec *= self.movementDamping_K
+                self.playerMoveAccelerationVec.set(0.0, 0.0, 0.0)
                 
                 #    -Handle the mouse events-
                 props = self.mainRef.win.getProperties() 
@@ -111,13 +118,12 @@ class MovementHandler(object):
                 self.cameraSpeedH += self.deltaMousePosition.getX() * self.cameraRotationSpeedH_K
                 self.cameraSpeedP += self.deltaMousePosition.getY() * self.cameraRotationSpeedP_K
                 
-                self.cameraH += self.cameraSpeedH
-                self.cameraP += self.cameraSpeedP  
+                self.cameraP += self.cameraSpeedP
                 
                 self.cameraSpeedH *= self.rotationDamping_K
-                self.cameraSpeedP *= self.rotationDamping_K       
+                self.cameraSpeedP *= self.rotationDamping_K
                  
-                # Just preventing the camera's 'R' from making it point to top or bottom
+                # Just preventing the camera's 'P' from making it point to top or bottom
                 if(self.cameraP > 89.9): 
                     self.cameraP = 89.9 
                 if(self.cameraP < -89.9): 

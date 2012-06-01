@@ -66,7 +66,7 @@ class Enemy(Creature):
         
            
         self.enemyModel.setScale(20,20,20)
-        self.enemyModel.setZ(-60)  
+        self.enemyModel.setZ(-60)
         
 
         self.enemyBulletShape = BulletBoxShape(Vec3(20,40,40))
