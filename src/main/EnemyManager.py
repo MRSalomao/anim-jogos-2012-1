@@ -15,7 +15,7 @@ class EnemyManager(object):
         self.enemys = []
         
         # List of points 3-D space in which enemies can spawn at
-        self.spawn_points = [(0,0,0),(30,15,0),(60,0,0)]
+        self.spawn_points = [(1, 0.1, 0)]
 
         # start
         taskMgr.doMethodLater(2.0, self.startInvasion, 'Start Invasion')
@@ -31,19 +31,19 @@ class EnemyManager(object):
 
             # Creating enemy
             enemy = Enemy(self.mainRef,'enemy_'+str(i))
-#            enemy.setPos(chosen_spawn_point[0],chosen_spawn_point[1],chosen_spawn_point[2])
+            enemy.setPos(chosen_spawn_point[0],chosen_spawn_point[1],chosen_spawn_point[2])
             self.enemys.append(enemy)
             
             # setting position that is valid for our path finder grid
-            self.spawnP = PathPoint(-94,0,-66,None,1,2,0)
-            enemy.setPos(self.spawnP.X,self.spawnP.Y,self.spawnP.Z)
-            enemy.spawnP = self.spawnP
+            "self.spawnP = PathPoint(-94,0,-66,None,1,2,0)"
+            #enemy.setPos(self.spawnP.X,self.spawnP.Y,self.spawnP.Z)
+            "enemy.spawnP = self.spawnP"
             
             # enemy update for path finding pursue
             self.playerWorldCurrPos = None
             self.playerWorldPastPos = None
             self.playerNP = self.mainRef.player.playerNP
-            def enemyUpdate(task):
+            """def enemyUpdate(task):
                 # getting player world position and verifying if has changed
                 self.playerWorldCurrPos = self.playerNP.getPos()
                 if (self.playerWorldPastPos == None):
@@ -53,7 +53,7 @@ class EnemyManager(object):
                     enemy.pursue(self.mainRef.map.AIworld, self.mainRef.map.pathPoints, self.playerNP, self.mainRef.map.xPosInterval, self.mainRef.map.yPosInterval, self.mainRef.map.zPosInterval)
                     self.playerWorldPastPos = self.playerWorldCurrPos
                 return task.cont
-            taskMgr.add(enemyUpdate, 'enemyUpdate')
+            taskMgr.add(enemyUpdate, 'enemyUpdate')"""
 
 ############# Old pursue algorithm           
             # Creating pursue behavior
@@ -72,42 +72,46 @@ class EnemyManager(object):
         "Handles how player shots affect zombies"
         # Erase zombies that are hit
         
-        global targettedEnemy
-        targettedEnemy = None
-       
-        for hit in rigid_node_target.getHits():
-            print NodePath(hit.getNode())
-            print NodePath(hit.getNode()).getParent()
-            if ( (NodePath(hit.getNode()).getName().find('enemy_') != -1) and (targettedEnemy == None) ):
-            	print 'entrei A'
-                strIndex = NodePath(hit.getNode()).getName().replace('enemy_','')
-                index = int(strIndex)
-                targettedEnemy = self.enemys[index]
-                if (targettedEnemy.lifePoints > 0):
-                    targettedEnemy.lifePoints -= 10
-                else:
-                    targettedEnemy.hide()
-                
-            elif ( ( NodePath(hit.getNode()).hasParent() ) and (targettedEnemy != None) and ( NodePath(hit.getNode()).getParent().getNode(2).getName() == targettedEnemy.name ) ):
-            	print 'entrei B'
-                if ( NodePath(hit.getNode()).getName() == 'arm_lr'):
-                    if (targettedEnemy.hitPoints['arm_lr'] > 0):
-                        targettedEnemy.hitPoints['arm_lr'] -= 1
-                    else:
-                        NodePath(hit.getNode()).detachNode()
-                elif ( NodePath(hit.getNode()).getName() == 'arm_ll'):
-                    if (targettedEnemy.hitPoints['arm_ll'] > 0):
-                        targettedEnemy.hitPoints['arm_ll'] -= 1
-                    else:
-                        NodePath(hit.getNode()).detachNode()
-                elif ( NodePath(hit.getNode()).getName() == 'leg_lr'):
-                    if (targettedEnemy.hitPoints['leg_lr'] > 0):
-                        targettedEnemy.hitPoints['leg_lr'] -= 1
-                    else:
-                        NodePath(hit.getNode()).detachNode()
-                elif ( NodePath(hit.getNode()).getName() == 'leg_ll'):
-                    if (targettedEnemy.hitPoints['leg_ll'] > 0):
-                        targettedEnemy.hitPoints['leg_ll'] -= 1
-                    else:
-                        NodePath(hit.getNode()).detachNode()
+        #global targettedEnemy
+        targetNode = NodePath(rigid_node_target.getNode())
+        targetNodeName = targetNode.getName(
+                                            )
+        #print NodePath(hit.getNode())
+        #print NodePath(hit.getNode()).getParent()
+        if ( targetNodeName.find('enemy') != -1):
+            enemyIndex = int(targetNodeName[-1])
+            attackedLimb = targetNodeName[:targetNodeName.rfind("_",0,targetNodeName.rfind("_"))]
+            
+            print "[Attack] Atacando Enemy_%d no membro %s" % (enemyIndex,attackedLimb)
+            
+            if (self.enemys[enemyIndex].lifePoints > 0):
+                self.enemys[enemyIndex].lifePoints -= 10
+            else:
+                print "[Destroy] Destruindo Enemy_%d" % (enemyIndex)
+                self.enemys[enemyIndex].destroy()
+            
         
+            if ( attackedLimb == 'arm_lr'):
+                if (self.enemys[enemyIndex].hitPoints['arm_lr'] > 0):
+                    self.enemys[enemyIndex].hitPoints['arm_lr'] -= 1
+                else:
+                    self.enemys[enemyIndex].detachLimb(attackedLimb)
+                    
+            elif ( attackedLimb == 'arm_ll'):
+                if (self.enemys[enemyIndex].hitPoints['arm_ll'] > 0):
+                    self.enemys[enemyIndex].hitPoints['arm_ll'] -= 1
+                else:
+                    self.enemys[enemyIndex].detachLimb(attackedLimb)
+                    
+            elif ( attackedLimb == 'leg_lr'):
+                if (self.enemys[enemyIndex].hitPoints['leg_lr'] > 0):
+                    self.enemys[enemyIndex].hitPoints['leg_lr'] -= 1
+                else:
+                    self.enemys[enemyIndex].detachLimb(attackedLimb)
+                    
+            elif ( attackedLimb == 'leg_ll'):
+                if (self.enemys[enemyIndex].hitPoints['leg_ll'] > 0):
+                    self.enemys[enemyIndex].hitPoints['leg_ll'] -= 1
+                else:
+                    self.enemys[enemyIndex].detachLimb(attackedLimb)
+          

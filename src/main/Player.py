@@ -65,8 +65,8 @@ class Player(Creature):
 
             direction = pTo - pFrom
             direction.normalize()
-            result = self.mainRef.world.rayTestAll(pFrom, pFrom+direction*1000)
-            if (result.hasHits()):
+            result = self.mainRef.world.rayTestClosest(pFrom, pFrom+direction*1000)
+            if (result.hasHit()):
                 self.mainRef.enemyManager.handleShot(result)
             
             # uncomment for projectile collision

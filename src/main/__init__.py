@@ -86,7 +86,7 @@ class Main(ShowBase):
         self.map = Map(self)
         
         # initializing enemy manager
-#        self.enemyManager = EnemyManager(self)
+        self.enemyManager = EnemyManager(self)
         
         # initializing HUD
         self.playerHUD = PlayerHUD(self)
