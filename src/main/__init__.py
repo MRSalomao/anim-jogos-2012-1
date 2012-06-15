@@ -42,7 +42,7 @@ class Main(ShowBase):
         debugNode.showBoundingBoxes(False)
         debugNode.showNormals(False)
         debugNP = render.attachNewNode(debugNode)
-        debugNP.show()
+
         
         # initializing Bullet physics
         self.world = BulletWorld()

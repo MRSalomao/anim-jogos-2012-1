@@ -30,7 +30,6 @@ class Map(object):
         # loading H_Block
         self.H_Block = loader.loadModel("../../models/H_Block/H_Block")
         self.H_Block.reparentTo(self.mainRef.render)
-#        self.H_Block.setScale(20)
         
         # loading H_Block's colision mesh
         self.H_Block_col = loader.loadModel("../../models/H_Block/H_Block_colision")
@@ -43,7 +42,15 @@ class Map(object):
         self.bulletHBlockNode = BulletRigidBodyNode('hBlockNode')
         self.bulletHBlockNode.addShape(self.hBlockBulletShape)
         self.mainRef.world.attachRigidBody(self.bulletHBlockNode)
-            
+        
+        
+        
+        self.pathGeometry = loader.loadModel("../../models/H_Block/path2")
+        
+        for convexRegion in self.pathGeometry.getChild(0).getChildren():
+            convexRegion.getNode(0).getTag("r1")
+            convexRegion.getNode(0).getGeom(0).getVertexData()
+
 ######### for path finding
         # collect points
 #        self.pathGeomNodes  = self.H_Block.find('**/static_nodes/floor')
@@ -135,22 +142,3 @@ class Map(object):
 #            point = self.pathPoints[i]
 #            self.AIworld.MarkPosition(point, False)
 #########
-
-
-        # loading test room
-#        self.testRoom = loader.loadModel("../../models/sala_teste")
-#        self.testRoom.reparentTo(self.mainRef.render)
-#        self.testRoom.setPos(500, 0, -35)
-#        self.testRoom.setScale(34, 34, 34)
-#        
-#        self.lightMapTS = TextureStage('LightMap')
-#        self.lightMapTS.setMode(TextureStage.MModulate)
-#        self.lightMapTS.setTexcoordName("ul")     
-#        
-#        levelGeomNodes = self.testRoom.getChild(0).getChildren()
-#        
-#        for levelGeomNode in levelGeomNodes:
-#        
-#            self.lightMapTexture = loader.loadTexture("../../models/" + levelGeomNode.getName() + ".png")  
-#            levelGeomNode.setTexture(self.lightMapTS, self.lightMapTexture)
-        

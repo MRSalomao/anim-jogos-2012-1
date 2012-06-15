@@ -3,6 +3,7 @@ from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletBoxShape
 from panda3d.bullet import BulletCharacterControllerNode
 from panda3d.bullet import BulletCapsuleShape
+from panda3d.bullet import BulletCylinderShape
 from panda3d.bullet import ZUp
 
 
@@ -25,10 +26,10 @@ class Player(Creature):
         
         # setting our bullet character node
         self.characterCapsuleHeight = 1.6
-        self.characterCapsuleRadius = .4
-        shape = BulletCapsuleShape(self.characterCapsuleRadius, self.characterCapsuleHeight, ZUp)
+        self.characterCapsuleRadius = 0.3
+        shape = BulletCylinderShape(self.characterCapsuleRadius, self.characterCapsuleHeight, ZUp)
         
-        self.playerNode = BulletCharacterControllerNode(shape, 0.4, 'Player')
+        self.playerNode = BulletCharacterControllerNode(shape, 0.3, 'Player')
 #        self.playerNode.setGravity(.01)
         self.playerNP = self.mainRef.render.attachNewNode(self.playerNode)
         self.playerNP.setCollideMask(BitMask32.allOn())
