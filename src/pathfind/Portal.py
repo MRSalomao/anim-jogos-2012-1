@@ -1,0 +1,7 @@
+
+
+class Portal(object):
+    frontiers = []
+    
+    
+    

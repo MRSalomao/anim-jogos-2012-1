@@ -9,8 +9,8 @@ from panda3d.core import GeomVertexReader
 from panda3d.core import InternalName
 
 from math import floor
-from pathfind import *
-from pathfind.PathPoint import *
+from pathfind.Region import *
+from pathfind.Portal import *
 
 import sys
 
@@ -44,12 +44,28 @@ class Map(object):
         self.mainRef.world.attachRigidBody(self.bulletHBlockNode)
         
         
+        self.pathRegions = []
         
-        self.pathGeometry = loader.loadModel("../../models/H_Block/path2")
+        self.pathGeometry = loader.loadModel("../../models/H_Block/path")
         
         for convexRegion in self.pathGeometry.getChild(0).getChildren():
-            convexRegion.getNode(0).getTag("r1")
-            convexRegion.getNode(0).getGeom(0).getVertexData()
+            regionNode = convexRegion.getNode(0)
+            regionsStr = regionNode.getTag("t") # syntax: myRegion, regionsConnectedToMe[?]
+            regionsArray = regionsStr.split(",")
+            self.pathRegions.append( Region(regionsArray[0], regionsArray[1:]) ) 
+            #self.pathRegions[-1].vertices = regionNode.getGeom(0).getVertexData()
+            #print self.pathRegions[-1].vertices
+
+            # Copy vertices
+            vertexReader = GeomVertexReader(regionNode.getGeom(0).getVertexData(), InternalName.getVertex())
+            while( not(vertexReader.isAtEnd() ) ):
+                data = vertexReader.getData3()
+                X = data.getX()
+                Y = data.getY()
+                Z = data.getZ()
+                self.pathRegions[-1].vertices.append((X,Y,Z))
+                
+        print self.pathRegions[-1].vertices
 
 ######### for path finding
         # collect points
