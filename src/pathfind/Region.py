@@ -1,10 +1,12 @@
 
 class Region(object):
-    vertices = []
-    regionID = 0
-    neighbourIDs = []
-    portalsList = []
-    
-    def __init__(self, regionID, neighbourIDs):
+
+    def __init__(self, regionID):
         self.regionID = regionID
-        self.neighbourIDs = neighbourIDs
+        self.neighbourIDs = []
+        self.vertices = []
+        self.portalsList = []
+        
+    def chagedRegion(self, currentRegion):
+        
+        return 0
