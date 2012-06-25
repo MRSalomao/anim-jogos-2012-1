@@ -94,7 +94,7 @@ class Main(ShowBase):
         # updating Bullet physics engine
         def update(task):
             dt = globalClock.getDt()
-            self.world.doPhysics(dt)
+            self.world.doPhysics(dt, 4, 1./120.)
             return task.cont
         taskMgr.add(update, 'update')
 

@@ -1,10 +1,11 @@
 from pandac.PandaModules import *
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletBoxShape
-from panda3d.bullet import BulletCharacterControllerNode
+from panda3d.bullet import BulletSphereShape
 from panda3d.bullet import BulletCapsuleShape
 from panda3d.bullet import BulletCylinderShape
 from panda3d.bullet import ZUp
+from CharacterBody import *
 
 
 from Creature import *
@@ -25,34 +26,44 @@ class Player(Creature):
         self.mainRef.camLens.setFar(80.0)
         
         # setting our bullet character node
-        self.characterCapsuleHeight = 1.6
-        self.characterCapsuleRadius = 0.3
-        shape = BulletCylinderShape(self.characterCapsuleRadius, self.characterCapsuleHeight, ZUp)
+#        self.characterCapsuleHeight = 1.5
+#        self.characterCapsuleRadius = 0.3
+#        shape = BulletCylinderShape(self.characterCapsuleRadius, self.characterCapsuleHeight, ZUp)
+#        
+#        self.playerNode = BulletRigidBodyNode('player')
+#        
+#        self.playerNode.setKinematic(True)
+#        
+#        self.playerNode.setStatic(True)
+#        
+#        self.playerNode.addShape(shape)
+#        
+#        print self.playerNode.getLinearDamping()
+#        
+#        self.playerNP = self.mainRef.render.attachNewNode(self.playerNode)
+#        
+#        self.playerNP.setCollideMask(BitMask32.allOn())
+#        self.playerNP.setPos(0, 2, 3) # test purposes
+
+        self.playerBody = CharacterBody(self.mainRef, Vec3(0, 2, 3), .4, 1.4)
         
-        self.playerNode = BulletCharacterControllerNode(shape, 0.3, 'Player')
-#        self.playerNode.setGravity(.01)
-        self.playerNP = self.mainRef.render.attachNewNode(self.playerNode)
-        self.playerNP.setCollideMask(BitMask32.allOn())
-        # test purposes
-        self.playerNP.setPos(0.1, 0.1, 10)
-        #
-        self.mainRef.world.attachCharacter(self.playerNP.node())
-        self.mainRef.camera.reparentTo(self.playerNP)
-        self.mainRef.camera.setPos(0, 0, 0.8)
+#        self.mainRef.world.attachRigidBody(self.playerNode)
+#        self.mainRef.camera.reparentTo(self.playerNP)
+        self.mainRef.camera.setPos(0, 0, 1.0)
         
         # setting our movementHandler
         self.movementHandler = MovementHandler(self.mainRef)
         self.movementHandler.registerFPSMovementInput() 
 
         # adding bullets when pressing left btn mouse
-        bullets = []
-        def removeBullet(task):
-            if len(bullets) < 1: return
-            
-            bulletNP = bullets.pop(0)
-            self.mainRef.world.removeRigidBody(bulletNP.node())
-            
-            return task.done
+#        bullets = []
+#        def removeBullet(task):
+#            if len(bullets) < 1: return
+#            
+#            bulletNP = bullets.pop(0)
+#            self.mainRef.world.removeRigidBody(bulletNP.node())
+#            
+#            return task.done
 
         def shootBullet():
             # Get from/to points from mouse click

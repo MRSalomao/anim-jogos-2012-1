@@ -42,7 +42,7 @@ class EnemyManager(object):
             # enemy update for path finding pursue
             self.playerWorldCurrPos = None
             self.playerWorldPastPos = None
-            self.playerNP = self.mainRef.player.playerNP
+#            self.playerNP = self.mainRef.player.playerNP
             """def enemyUpdate(task):
                 # getting player world position and verifying if has changed
                 self.playerWorldCurrPos = self.playerNP.getPos()

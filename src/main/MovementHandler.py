@@ -4,6 +4,8 @@ from math import *
 import time 
 
 class MovementHandler(object):
+    
+    degreeInRad = 3.1415 / 180
 
     def __init__(self, mainReference):
         self.mainRef = mainReference
@@ -11,13 +13,13 @@ class MovementHandler(object):
         self.movementTaskList = []
 
         # 'K' stands for constants
-        self.cameraRotationSpeedH_K = 3.30
+        self.cameraRotationSpeedH_K = 0.04
         self.cameraRotationSpeedP_K = 0.03
-        self.cameraMovementSpeed_K = 2.0
+        self.cameraMovementSpeed_K = 0.1
         
         # Rate at which the camera rotation/movement fades away
-        self.rotationDamping_K = 0.65
-        self.movementDamping_K = 0.65
+        self.rotationDamping_K = 0.55
+        self.movementDamping_K = 0.55
         
         self.moveTowards  = False
         self.moveBackwards = False
@@ -39,6 +41,7 @@ class MovementHandler(object):
         self.cameraSpeedP = 0.0
         
         self.playerMoveAccelerationVec = Vec3(0.0, 0.0, 0.0)
+        self.playerMoveDirection = Vec3(0.0, 0.0, 0.0)
         self.playerMoveSpeedVec = Vec3(0.0, 0.0, 0.0)
         
         taskMgr.add(self.frameRateWatcher, "frameRateWatcher", priority=2)
@@ -87,22 +90,28 @@ class MovementHandler(object):
                 
                 #    -Handle the keyboard events-
                 if(self.moveRight == True):
-                    self.playerMoveAccelerationVec.setX( 1.0 )   
+                    self.playerMoveAccelerationVec.addX(  cos(self.cameraH * MovementHandler.degreeInRad) )   
+                    self.playerMoveAccelerationVec.addY(  sin(self.cameraH * MovementHandler.degreeInRad) )
                 if(self.moveLeft == True):
-                    self.playerMoveAccelerationVec.setX( -1.0 )
+                    self.playerMoveAccelerationVec.addX( -cos(self.cameraH * MovementHandler.degreeInRad) )
+                    self.playerMoveAccelerationVec.addY(  -sin(self.cameraH * MovementHandler.degreeInRad) )
                 if(self.moveBackwards == True):
-                    self.playerMoveAccelerationVec.setY( -1.0 )  
+                    self.playerMoveAccelerationVec.addX( sin(self.cameraH * MovementHandler.degreeInRad) )
+                    self.playerMoveAccelerationVec.addY( -cos(self.cameraH * MovementHandler.degreeInRad) )  
                 if(self.moveTowards == True): 
-                    self.playerMoveAccelerationVec.setY( 1.0 )
-                    
+                    self.playerMoveAccelerationVec.addX(  -sin(self.cameraH * MovementHandler.degreeInRad) )
+                    self.playerMoveAccelerationVec.addY(  cos(self.cameraH * MovementHandler.degreeInRad) )
+      
                 self.playerMoveAccelerationVec.normalize()
                 self.playerMoveAccelerationVec *= self.cameraMovementSpeed_K
                 
                 self.playerMoveSpeedVec += self.playerMoveAccelerationVec
                 self.playerMoveSpeedVec *= self.movementDamping_K
+
+                self.playerMoveDirection = Vec3(self.playerMoveSpeedVec)
+                self.playerMoveDirection.normalize()
                         
-                self.mainRef.player.playerNode.setLinearMovement(self.playerMoveSpeedVec, True)
-                
+                self.mainRef.player.playerBody.move(self.playerMoveSpeedVec)
                 self.playerMoveAccelerationVec.set(0.0, 0.0, 0.0)
                 
                 #    -Handle the mouse events-
@@ -119,6 +128,7 @@ class MovementHandler(object):
                 self.cameraSpeedP += self.deltaMousePosition.getY() * self.cameraRotationSpeedP_K
                 
                 self.cameraP += self.cameraSpeedP
+                self.cameraH += self.cameraSpeedH
                 
                 self.cameraSpeedH *= self.rotationDamping_K
                 self.cameraSpeedP *= self.rotationDamping_K
@@ -129,14 +139,11 @@ class MovementHandler(object):
                 if(self.cameraP < -89.9): 
                     self.cameraP = -89.9 
                      
-                self.mainRef.camera.setHpr(0, self.cameraP, 0)
-                
-                # player character angulation
-                self.mainRef.player.playerNode.setAngularMovement(self.cameraSpeedH)
+                self.mainRef.camera.setHpr(self.cameraH, self.cameraP, 0)
         
                 # This should prevent mouse from going outside of the window
                 self.mainRef.win.movePointer(0, winSizeX/2, winSizeY/2)
         
-        self.shouldUptade = False
+            self.shouldUptade = False
         
         return task.cont 
