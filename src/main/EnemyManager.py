@@ -1,7 +1,6 @@
 from direct.task import Task
 from panda3d.ai import *
 from Enemy import *
-from pathfind.PathPoint import *
 
 import random
 
