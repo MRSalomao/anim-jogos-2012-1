@@ -6,7 +6,7 @@ class CharacterBody(object):
     def __init__(self, mainReference, initialPosition, bodyRadius, bodyHeight):
         self.mainRef = mainReference
         self.position = initialPosition
-        self.bodyRadius = bodyRadius
+        self.bodyRadius = bodyRadius # not in use
         self.bodyHeight = bodyHeight
         self.stepNormal = ZUp
         
@@ -41,10 +41,10 @@ class CharacterBody(object):
         
         if (result.hasHit()):
 #            print "bateu!"
-            print self.position
-            print speedVec, "speedVec"
-            print result.getHitFraction()
-            print ""
+#            print self.position
+#            print speedVec, "speedVec"
+#            print result.getHitFraction()
+#            print ""
             self.position = self.position + speedVec * result.getHitFraction()
         else:
             self.position = newPositionAttempt

@@ -15,7 +15,7 @@ class EnemyManager(object):
         self.enemys = []
         
         # List of points 3-D space in which enemies can spawn at
-        self.spawn_points = [(1, 0.1, 0)]
+        self.spawn_points = [(2, 2, 3),(-2,-2,3),(1,1,3),(-1,-1,3),(2,3,3),(-2,-1,3),(-1,-2,3),(-1,3,3)]
 
         # start
         taskMgr.doMethodLater(2.0, self.startInvasion, 'Start Invasion')
@@ -30,8 +30,7 @@ class EnemyManager(object):
             chosen_spawn_point = random.choice(self.spawn_points)
 
             # Creating enemy
-            enemy = Enemy(self.mainRef,'enemy_'+str(i))
-            enemy.setPos(chosen_spawn_point[0],chosen_spawn_point[1],chosen_spawn_point[2])
+            enemy = Enemy(self.mainRef,'enemy_'+str(i),chosen_spawn_point)
             self.enemys.append(enemy)
             
             # setting position that is valid for our path finder grid
@@ -55,11 +54,9 @@ class EnemyManager(object):
                 return task.cont
             taskMgr.add(enemyUpdate, 'enemyUpdate')"""
             
-            def enemyUpdate(task):
-                enemy.pursue()
-                return task.cont
+            # pursue on path find
+            enemy.pursue()
             
-            taskMgr.add(enemyUpdate, 'enemyPursue')
 ############# Old pursue algorithm           
             # Creating pursue behavior
 #            self.AIchar.append(AICharacter('seeker_'+str(i),enemy.np, mass, mov_force, max_force))
@@ -69,7 +66,7 @@ class EnemyManager(object):
 #############
         
     def startInvasion(self,task):
-        self.startRandomInvasion(1)
+        self.startRandomInvasion(6)
         
         return task.done
 
@@ -93,6 +90,7 @@ class EnemyManager(object):
                 self.enemys[enemyIndex].lifePoints -= 10
             else:
                 print "[Destroy] Destruindo Enemy_%d" % (enemyIndex)
+                taskMgr.remove( str(self.enemys[enemyIndex].name) )
                 self.enemys[enemyIndex].destroy()
             
         

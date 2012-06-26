@@ -47,7 +47,7 @@ class Player(Creature):
 #        self.playerNP.setCollideMask(BitMask32.allOn())
 #        self.playerNP.setPos(0, 2, 3) # test purposes
 
-        self.playerBody = CharacterBody(self.mainRef, Point3(0, 2, 3), .4, 1.4)
+        self.playerBody = CharacterBody(self.mainRef, Point3(0, 2, 3), .4, 1.2)
         
 #        self.mainRef.world.attachRigidBody(self.playerNode)
 #        self.mainRef.camera.reparentTo(self.playerNP)

@@ -14,7 +14,7 @@ import sys
 
 class Enemy(Creature):
     
-    def __init__(self, mainReference, name):
+    def __init__(self, mainReference, name, position):
         self.mainRef = mainReference
         
         #unique enemy name
@@ -35,9 +35,13 @@ class Enemy(Creature):
         
         # load our zombie
         self.enemyModel = Actor("../../models/model_zombie/zombie")
+        # ****SCALE****
+        self.enemyModel.setScale(0.4)
+        # ****SCALE****
+        self.enemyModel.setPos(position)
         
         #enemy's character controller
-        self.enemyBody = CharacterBody(self.mainRef, Point3(self.enemyModel.getPos()), .4, 1.0)
+        self.enemyBody = CharacterBody(self.mainRef, Point3( self.enemyModel.getPos() ) , .4, .4) # Point3(self.enemyModel.getPos())
         
         # load the zombie's bounding boxes
         self.enemyBB = loader.loadModel("../../models/model_zombie/zombieBB")
@@ -67,6 +71,11 @@ class Enemy(Creature):
             #self.bulletbodyPartNode.setMass(1)
             #self.bulletbodyPartNode.setGravity(Vec3(0,0,0))
             self.bodyPartNode = self.mainRef.render.attachNewNode(self.bulletbodyPartNode)
+            # ****SCALE****
+            self.bodyPartNode.setScale(0.4)
+            # ****SCALE****
+            self.bodyPartNode.setPos(position)
+            
             self.mainRef.world.attachRigidBody(self.bulletbodyPartNode)
        
             self.bodyPartNode.wrtReparentTo(self.enemyModel.exposeJoint(None,"modelRoot",bodyPart))
@@ -87,8 +96,8 @@ class Enemy(Creature):
 #            self.bodyPartNode.wrtReparentTo(self.enemyModel.exposeJoint(None,"modelRoot",bodyPart))
         
         
-        #self.enemyModel.setScale(20,20,20)
-        self.enemyModel.setPos(0,0,-80)  
+#        self.enemyModel.setScale(20,20,20)
+#        self.enemyModel.setPos(0,0,-80)  
         self.enemyModel.loop("walk")
         
         # Remove big box around enemy
@@ -118,11 +127,14 @@ class Enemy(Creature):
         self.enemyModel.setPos(x,y,z)
         
     def pursue(self):
-        if (self.mainRef.player.currentRegion == self.currentRegion):
-            enemyMovement = self.mainRef.camera.getPos().getXy() - self.enemyModel.getPos().getXy()
-            enemyMovement.normalize()
-            enemyMovement *= self.speed
-            self.enemyModel.setPos( self.enemyBody.move(Vec3(enemyMovement.getX(), enemyMovement.getY(), 0) ) )
+        def pursueStep(task):
+            if (self.mainRef.player.currentRegion == self.currentRegion):
+                enemyMovement = self.mainRef.camera.getPos().getXy() - self.enemyModel.getPos().getXy()
+                enemyMovement.normalize()
+                enemyMovement *= self.speed
+                self.enemyModel.setPos( self.enemyBody.move(Vec3(enemyMovement.getX(), enemyMovement.getY(), 0) ) )
+            return task.cont
+        taskMgr.add(pursueStep, self.name)
         
 #    def pursue(self,AIworld, pathPoints, playerWorldPos, xPosInterval,yPosInterval,zPosInterval):
 #        # getting player positioning and assigning the closest grid point
