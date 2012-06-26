@@ -7,7 +7,7 @@ from panda3d.bullet import BulletCylinderShape
 from panda3d.bullet import ZUp
 from CharacterBody import *
 
-
+from Glock import *
 from Creature import *
 from MovementHandler import *
 
@@ -53,4 +53,7 @@ class Player(Creature):
             
         # adding the shoot event
         self.mainRef.accept("mouse1", shootBullet)
+        
+        # attach default weapon
+        self.activeWeapon = Glock(self.mainRef)
         

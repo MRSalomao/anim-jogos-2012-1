@@ -1,9 +1,9 @@
-from main import Creature
 from pandac.PandaModules import *
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
 from direct.actor.Actor import Actor
 from CharacterBody import *
+from Creature import *
 
 import sys
 
@@ -11,6 +11,7 @@ class Enemy(Creature):
     
     def __init__(self, mainReference, name, position):
         self.mainRef = mainReference
+        super(Enemy, self).__init__(mainReference)
         
         # unique enemy name
         self.name = name

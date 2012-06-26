@@ -1,5 +1,4 @@
 from direct.task import Task
-from panda3d.ai import *
 from Enemy import *
 
 import random
