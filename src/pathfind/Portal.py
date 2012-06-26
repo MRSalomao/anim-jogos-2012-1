@@ -1,4 +1,4 @@
-
+from pandac.PandaModules import *
 
 class Portal(object):
     

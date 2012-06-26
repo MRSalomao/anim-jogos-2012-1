@@ -7,8 +7,8 @@ from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
 from panda3d.bullet import BulletDebugNode
 
-from pathfind.PathPoint import *
-from pathfind import *
+from CharacterBody import *
+
 
 import sys
 
@@ -20,6 +20,12 @@ class Enemy(Creature):
         #unique enemy name
         self.name = name
         
+        #enemy's pursue speed
+        self.speed = 0.02
+        
+        #enemy's current convex region
+        self.currentRegion = 1
+        
         # path point as spawn point
         self.spawnP = None
         
@@ -29,6 +35,9 @@ class Enemy(Creature):
         
         # load our zombie
         self.enemyModel = Actor("../../models/model_zombie/zombie")
+        
+        #enemy's character controller
+        self.enemyBody = CharacterBody(self.mainRef, Point3(self.enemyModel.getPos()), .4, 1.0)
         
         # load the zombie's bounding boxes
         self.enemyBB = loader.loadModel("../../models/model_zombie/zombieBB")
@@ -108,38 +117,45 @@ class Enemy(Creature):
         #self.np.setPos(x,y,z)
         self.enemyModel.setPos(x,y,z)
         
-    def pursue(self,AIworld, pathPoints, playerWorldPos, xPosInterval,yPosInterval,zPosInterval):
-        # getting player positioning and assigning the closest grid point
-        playerPX = playerWorldPos.getX()
-        playerPY = playerWorldPos.getY()
-        playerPZ = playerWorldPos.getZ()
-        playerPathPoint = PathPoint(playerPX,playerPY,playerPZ)
-        currSquaredDist = sys.float_info.max
-        minSquaredDist = sys.float_info.max
-        bestGridPoint = None
-        for i in range(len(pathPoints)):
-            point = pathPoints[i]
-            currSquaredDist = playerPathPoint.getDistanceSquared(point)
-            if (minSquaredDist == sys.float_info.max):
-                minSquaredDist = playerPathPoint.getDistanceSquared(point)
-                bestGridPoint = point
-            if (currSquaredDist < minSquaredDist):
-                minSquaredDist = currSquaredDist
-                bestGridPoint = point
-        bestGridPoint # this point is the goal point for our PathFinder
+    def pursue(self):
+        if (self.mainRef.player.currentRegion == self.currentRegion):
+            enemyMovement = self.mainRef.camera.getPos().getXy() - self.enemyModel.getPos().getXy()
+            enemyMovement.normalize()
+            enemyMovement *= self.speed
+            self.enemyModel.setPos( self.enemyBody.move(Vec3(enemyMovement.getX(), enemyMovement.getY(), 0) ) )
         
-        # testing path find
-        self.pFinder = PathFinder(AIworld, self.spawnP, 
-                                  PathPoint(bestGridPoint.X,bestGridPoint.Y,bestGridPoint.Z,None,bestGridPoint.gridPosX,bestGridPoint.gridPosY,bestGridPoint.gridPosZ),
-                                  pathPoints , xPosInterval, yPosInterval, zPosInterval)
-        crumb = self.pFinder.node
-        while (crumb != None):
-            # debug purposes
-#            print crumb.point
-            #self.np.setPos(Point3(crumb.point.X,crumb.point.Y,crumb.point.Z))
-            self.enemyModel.setPos(Point3(crumb.point.X,crumb.point.Y,crumb.point.Z))
-
-            crumb = crumb.next
+#    def pursue(self,AIworld, pathPoints, playerWorldPos, xPosInterval,yPosInterval,zPosInterval):
+#        # getting player positioning and assigning the closest grid point
+#        playerPX = playerWorldPos.getX()
+#        playerPY = playerWorldPos.getY()
+#        playerPZ = playerWorldPos.getZ()
+#        playerPathPoint = PathPoint(playerPX,playerPY,playerPZ)
+#        currSquaredDist = sys.float_info.max
+#        minSquaredDist = sys.float_info.max
+#        bestGridPoint = None
+#        for i in range(len(pathPoints)):
+#            point = pathPoints[i]
+#            currSquaredDist = playerPathPoint.getDistanceSquared(point)
+#            if (minSquaredDist == sys.float_info.max):
+#                minSquaredDist = playerPathPoint.getDistanceSquared(point)
+#                bestGridPoint = point
+#            if (currSquaredDist < minSquaredDist):
+#                minSquaredDist = currSquaredDist
+#                bestGridPoint = point
+#        bestGridPoint # this point is the goal point for our PathFinder
+#        
+#        # testing path find
+#        self.pFinder = PathFinder(AIworld, self.spawnP, 
+#                                  PathPoint(bestGridPoint.X,bestGridPoint.Y,bestGridPoint.Z,None,bestGridPoint.gridPosX,bestGridPoint.gridPosY,bestGridPoint.gridPosZ),
+#                                  pathPoints , xPosInterval, yPosInterval, zPosInterval)
+#        crumb = self.pFinder.node
+#        while (crumb != None):
+#            # debug purposes
+##            print crumb.point
+#            #self.np.setPos(Point3(crumb.point.X,crumb.point.Y,crumb.point.Z))
+#            self.enemyModel.setPos(Point3(crumb.point.X,crumb.point.Y,crumb.point.Z))
+#
+#            crumb = crumb.next
         
     def destroy(self):
 #        self.enemyModel.unload()

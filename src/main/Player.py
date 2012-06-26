@@ -25,6 +25,8 @@ class Player(Creature):
         self.mainRef.camLens.setNear(0.02)
         self.mainRef.camLens.setFar(80.0)
         
+        self.currentRegion = 1
+        
         # setting our bullet character node
 #        self.characterCapsuleHeight = 1.5
 #        self.characterCapsuleRadius = 0.3
@@ -45,7 +47,7 @@ class Player(Creature):
 #        self.playerNP.setCollideMask(BitMask32.allOn())
 #        self.playerNP.setPos(0, 2, 3) # test purposes
 
-        self.playerBody = CharacterBody(self.mainRef, Vec3(0, 2, 3), .4, 1.4)
+        self.playerBody = CharacterBody(self.mainRef, Point3(0, 2, 3), .4, 1.4)
         
 #        self.mainRef.world.attachRigidBody(self.playerNode)
 #        self.mainRef.camera.reparentTo(self.playerNP)

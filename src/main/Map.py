@@ -33,7 +33,7 @@ class Map(object):
         self.H_Block.reparentTo(self.mainRef.render)
         
         # loading H_Block's colision mesh
-        self.H_Block_col = loader.loadModel("../../models/H_Block/H_Block_colision")
+        self.H_Block_col = loader.loadModel("../../models/H_Block/H_Block_colision2")
         
         # creating triangle meshes for all static nodes
         self.hBlockRoomGeom = self.H_Block_col.getChild(0).getNode(0).getGeom(0)
@@ -48,12 +48,14 @@ class Map(object):
         self.convexRegions = []
         self.portals = []
         
-        self.convexRegionsGeometry = loader.loadModel("../../models/H_Block/ConvexRegions")
-        self.portalsGeometry = loader.loadModel("../../models/H_Block/Portals")
+        self.convexRegionsGeometry = loader.loadModel("../../models/H_Block/ConvexRegions2")
+        self.portalsGeometry = loader.loadModel("../../models/H_Block/Portals2")
+        self.portalsGeometry.reparentTo(self.mainRef.render)
         
+        # Regions
         for convexRegion in self.convexRegionsGeometry.getChild(0).getChildren():
             regionNode = convexRegion.getNode(0)
-            regionID = regionNode.getTag("t")
+            regionID = regionNode.getTag("prop")
             self.convexRegions.append( Region(regionID) )
 
             # Get vertices that define the convex region
@@ -65,10 +67,12 @@ class Map(object):
                 Z = data.getZ()
                 self.convexRegions[-1].vertices.append((X,Y,Z))
                 
-        sorted(self.convexRegions, key=lambda convexRegion: convexRegion.regionID)
+        self.convexRegions = sorted(self.convexRegions, key=lambda convexRegion: convexRegion.regionID)
+        for cr in self.convexRegions: print cr.regionID
 
+        # Portals
         for portal in self.portalsGeometry.getChild(0).getChildren():
-            portalNode = portal.getNode(0)       
+            portalNode = portal.getNode(0)
 
             # Get vertices that define the portal
             frontiers = []
@@ -78,13 +82,18 @@ class Map(object):
                 X = data.getX()
                 Y = data.getY()
                 Z = data.getZ()
-                frontiers.append((X,Y,Z))
-                
-            connectedRegionsIDs = portalNode.getTag("t").split('t')
-            
+                frontiers.append(Vec3(X,Y,Z))
+               
+            connectedRegionsIDs = map(int, portalNode.getTag("prop").split(','))   
+      
             self.portals.append( Portal(connectedRegionsIDs, frontiers) )  
             
+            self.convexRegions[ connectedRegionsIDs[0] - 1 ].neighbourIDs.append( connectedRegionsIDs[1] )
+            self.convexRegions[ connectedRegionsIDs[0] - 1 ].portalsList.append( self.portals[-1] )
+            self.convexRegions[ connectedRegionsIDs[1] - 1 ].neighbourIDs.append (connectedRegionsIDs[0] )
+            self.convexRegions[ connectedRegionsIDs[1] - 1 ].portalsList.append( self.portals[-1] )
             
+        for portal in self.portals: print portal.connectedRegionsIDs
             
 ######### for path finding
         # collect points

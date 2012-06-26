@@ -44,6 +44,8 @@ class MovementHandler(object):
         self.playerMoveDirection = Vec3(0.0, 0.0, 0.0)
         self.playerMoveSpeedVec = Vec3(0.0, 0.0, 0.0)
         
+        self.oldPosition = self.mainRef.camera.getPos() 
+        
         taskMgr.add(self.frameRateWatcher, "frameRateWatcher", priority=2)
         taskMgr.add(self.updateMovement, "updateMovement", priority=1)
         
@@ -111,7 +113,9 @@ class MovementHandler(object):
                 self.playerMoveDirection = Vec3(self.playerMoveSpeedVec)
                 self.playerMoveDirection.normalize()
                         
-                self.mainRef.player.playerBody.move(self.playerMoveSpeedVec)
+                self.mainRef.camera.setPos( self.mainRef.player.playerBody.move(self.playerMoveSpeedVec) )
+                self.checkIfChangedRegion()
+                
                 self.playerMoveAccelerationVec.set(0.0, 0.0, 0.0)
                 
                 #    -Handle the mouse events-
@@ -147,3 +151,33 @@ class MovementHandler(object):
             self.shouldUptade = False
         
         return task.cont 
+    
+    
+    def checkIfChangedRegion(self, lastRegion=0):
+        i = 0
+        for portal in self.mainRef.map.convexRegions[self.mainRef.player.currentRegion - 1].portalsList:
+            
+            if ( self.intersect( self.oldPosition, self.mainRef.camera.getPos(), portal.frontiers[0], portal.frontiers[1] )
+                 and portal.connectedRegionsIDs[0] != lastRegion 
+                 and portal.connectedRegionsIDs[1] != lastRegion ):
+                lr = self.mainRef.player.currentRegion
+                self.mainRef.player.currentRegion = self.mainRef.map.convexRegions[self.mainRef.player.currentRegion - 1].neighbourIDs[i]
+                print "Player region changed: ", lr, ">", self.mainRef.player.currentRegion
+                self.checkIfChangedRegion(lr)
+                
+            i += 1
+        
+        self.oldPosition = self.mainRef.camera.getPos()
+              
+
+    def ccw(self, A,B,C):
+        return (C.getY()-A.getY())*(B.getX()-A.getX()) > (B.getY()-A.getY())*(C.getX()-A.getX())
+    
+    def intersect(self, A,B,C,D):
+        return self.ccw(A,C,D) != self.ccw(B,C,D) and self.ccw(A,B,C) != self.ccw(A,B,D)
+
+        
+        
+        
+        
+        

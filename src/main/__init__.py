@@ -99,7 +99,7 @@ class Main(ShowBase):
         taskMgr.add(update, 'update')
 
 ######### Old pursue code      
-        #to update the AIWorld    
+        #to update the AIWorld
 #        def AIUpdate(task):
 #            self.AIworld.update()            
 #            return Task.cont

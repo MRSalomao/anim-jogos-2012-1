@@ -54,7 +54,12 @@ class EnemyManager(object):
                     self.playerWorldPastPos = self.playerWorldCurrPos
                 return task.cont
             taskMgr.add(enemyUpdate, 'enemyUpdate')"""
-
+            
+            def enemyUpdate(task):
+                enemy.pursue()
+                return task.cont
+            
+            taskMgr.add(enemyUpdate, 'enemyPursue')
 ############# Old pursue algorithm           
             # Creating pursue behavior
 #            self.AIchar.append(AICharacter('seeker_'+str(i),enemy.np, mass, mov_force, max_force))
