@@ -64,8 +64,7 @@ class MovementHandler(object):
     def unregisterFPSMovementInput(self):
         while( not(self.movementTaskList.empty()) ):
             self.movementTaskList.pop().remove()
-        
-                   
+         
     # this setters triggers keyboard movement of our camera    
     def setMoveTowards(self,value):
         self.moveTowards = value
