@@ -66,7 +66,7 @@ class EnemyManager(object):
 #############
         
     def startInvasion(self,task):
-        self.startRandomInvasion(6)
+        self.startRandomInvasion(2)
         
         return task.done
 
@@ -90,7 +90,6 @@ class EnemyManager(object):
                 self.enemys[enemyIndex].lifePoints -= 10
             else:
                 print "[Destroy] Destruindo Enemy_%d" % (enemyIndex)
-                taskMgr.remove( str(self.enemys[enemyIndex].name) )
                 self.enemys[enemyIndex].destroy()
             
         

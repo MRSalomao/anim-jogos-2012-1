@@ -17,17 +17,14 @@ class Enemy(Creature):
     def __init__(self, mainReference, name, position):
         self.mainRef = mainReference
         
-        #unique enemy name
+        # unique enemy name
         self.name = name
         
-        #enemy's pursue speed
+        # enemy's pursue speed
         self.speed = 0.02
         
-        #enemy's current convex region
+        # enemy's current convex region; for pursue purposes
         self.currentRegion = 1
-        
-        # path point as spawn point
-        self.spawnP = None
         
         # Hit Points of each part of zombie
         self.hitPoints = {'leg_lr':2, 'leg_ll':2, 'arm_lr':2, 'arm_ll':2}
@@ -41,7 +38,7 @@ class Enemy(Creature):
         self.enemyModel.setPos(position)
         
         #enemy's character controller
-        self.enemyBody = CharacterBody(self.mainRef, Point3( self.enemyModel.getPos() ) , .4, .4) # Point3(self.enemyModel.getPos())
+        self.enemyBody = CharacterBody(self.mainRef, Point3( self.enemyModel.getPos() ) , .4, .4)
         
         # load the zombie's bounding boxes
         self.enemyBB = loader.loadModel("../../models/model_zombie/zombieBB")
@@ -59,7 +56,6 @@ class Enemy(Creature):
             # Get joint control structure
             self.joints[bodyPart] = self.enemyModel.controlJoint(None, 'modelRoot', bodyPart)
         
-        
         # getting 1 by 1 and attaching them to their corresponding bones     
         for bodyPart in bodyParts:
 
@@ -68,8 +64,6 @@ class Enemy(Creature):
             
             self.bulletbodyPartNode = BulletRigidBodyNode(bodyPart+"_"+name)
             self.bulletbodyPartNode.addShape(self.bodyPartShape)
-            #self.bulletbodyPartNode.setMass(1)
-            #self.bulletbodyPartNode.setGravity(Vec3(0,0,0))
             self.bodyPartNode = self.mainRef.render.attachNewNode(self.bulletbodyPartNode)
             # ****SCALE****
             self.bodyPartNode.setScale(0.4)
@@ -95,36 +89,20 @@ class Enemy(Creature):
 #       
 #            self.bodyPartNode.wrtReparentTo(self.enemyModel.exposeJoint(None,"modelRoot",bodyPart))
         
-        
-#        self.enemyModel.setScale(20,20,20)
-#        self.enemyModel.setPos(0,0,-80)  
+        # walk loop
         self.enemyModel.loop("walk")
         
-        # Remove big box around enemy
-        """self.enemyBulletShape = BulletBoxShape(Vec3(20,40,40))
-        self.enemyBulletNode = BulletRigidBodyNode(name)
-        self.enemyBulletNode.addShape(self.enemyBulletShape)
-        self.np = self.mainRef.render.attachNewNode(self.enemyBulletNode)
-        self.np.setPos(self.np.getZ()-10)
-        self.mainRef.world.attachRigidBody(self.enemyBulletNode)
-        self.enemyModel.reparentTo(self.np)"""
+        # attaching to render
         self.enemyModel.wrtReparentTo(self.mainRef.render)
 
         
     def hide(self):
-        ##self.mainRef.world.removeRigidBody(self.enemyBulletNode)
-        #self.np.hide()
         self.enemyModel.hide()
         
     def show(self):
         self.mainRef.world.attachRigidBody(self.enemyBulletNode)
-        #self.np.show()
         self.enemyModel.show()
         self.enemyModel.loop("walk")
-        
-    def setPos(self,x,y,z):
-        #self.np.setPos(x,y,z)
-        self.enemyModel.setPos(x,y,z)
         
     def pursue(self):
         def pursueStep(task):
@@ -136,67 +114,32 @@ class Enemy(Creature):
             return task.cont
         taskMgr.add(pursueStep, self.name)
         
-#    def pursue(self,AIworld, pathPoints, playerWorldPos, xPosInterval,yPosInterval,zPosInterval):
-#        # getting player positioning and assigning the closest grid point
-#        playerPX = playerWorldPos.getX()
-#        playerPY = playerWorldPos.getY()
-#        playerPZ = playerWorldPos.getZ()
-#        playerPathPoint = PathPoint(playerPX,playerPY,playerPZ)
-#        currSquaredDist = sys.float_info.max
-#        minSquaredDist = sys.float_info.max
-#        bestGridPoint = None
-#        for i in range(len(pathPoints)):
-#            point = pathPoints[i]
-#            currSquaredDist = playerPathPoint.getDistanceSquared(point)
-#            if (minSquaredDist == sys.float_info.max):
-#                minSquaredDist = playerPathPoint.getDistanceSquared(point)
-#                bestGridPoint = point
-#            if (currSquaredDist < minSquaredDist):
-#                minSquaredDist = currSquaredDist
-#                bestGridPoint = point
-#        bestGridPoint # this point is the goal point for our PathFinder
-#        
-#        # testing path find
-#        self.pFinder = PathFinder(AIworld, self.spawnP, 
-#                                  PathPoint(bestGridPoint.X,bestGridPoint.Y,bestGridPoint.Z,None,bestGridPoint.gridPosX,bestGridPoint.gridPosY,bestGridPoint.gridPosZ),
-#                                  pathPoints , xPosInterval, yPosInterval, zPosInterval)
-#        crumb = self.pFinder.node
-#        while (crumb != None):
-#            # debug purposes
-##            print crumb.point
-#            #self.np.setPos(Point3(crumb.point.X,crumb.point.Y,crumb.point.Z))
-#            self.enemyModel.setPos(Point3(crumb.point.X,crumb.point.Y,crumb.point.Z))
-#
-#            crumb = crumb.next
-        
     def destroy(self):
-#        self.enemyModel.unload()
-#        self.enemyBB.unload()
-        #self.np.detachNode()
-        self.enemyModel.cleanup() #ou cleanup(). removeNode() para models.
+        taskMgr.remove( str(self.name) )
+        self.enemyModel.cleanup()
         self.enemyBB.removeNode()
         for node in self.bulletNodes.keys():
             self.mainRef.world.removeRigidBody(self.bulletNodes[node])
             
     def detachLimb(self,limb):
-        """ Detaches a limb from the enemy and makes it drop on the floor"""
+        # Detaches a limb from the enemy and makes it drop on the floor
         print "[Detach] Detach %s" % limb
         
-        #self.partNodes[limb].wrtReparentTo(self.mainRef.render)
-
-        #shape = BulletSphereShape(10.0)
-        #node = BulletRigidBodyNode('Sphere')
-        #node.setMass(1.0)
-        #node.addShape(shape)
-        #np = self.mainRef.render.attachNewNode(node)
-        #np.setPos(self.enemyModel.exposeJoint(None,"modelRoot",limb).getPos())
-        #np.setPos(np.getRelativePoint(self.partNodes[limb],self.partNodes[limb].getPos()))
-        #np.setPos(60,0,-60)
-        #print np.getRelativePoint(self.partNodes[limb],self.partNodes[limb].getPos())
-        #print self.partNodes[limb].getPos()
-        #self.mainRef.world.attachRigidBody(node)
-        
-        #self.bulletNodes[limb].applyCentralForce(Vec3(0, 0, -5))
-        #self.mainRef.world.removeRigidBody(self.bulletNodes[limb])
+#        self.partNodes[limb].wrtReparentTo(self.mainRef.render)
+#
+#        shape = BulletSphereShape(10.0)
+#        node = BulletRigidBodyNode('Sphere')
+#        node.setMass(1.0)
+#        node.addShape(shape)
+#        np = self.mainRef.render.attachNewNode(node)
+#        np.setPos(self.enemyModel.exposeJoint(None,"modelRoot",limb).getPos())
+#        np.setPos(np.getRelativePoint(self.partNodes[limb],self.partNodes[limb].getPos()))
+#        np.setPos(60,0,-60)
+#        print np.getRelativePoint(self.partNodes[limb],self.partNodes[limb].getPos())
+#        print self.partNodes[limb].getPos()
+#        self.mainRef.world.attachRigidBody(node)
+#        
+#        self.bulletNodes[limb].applyCentralForce(Vec3(0, 0, -5))
+#        self.mainRef.world.removeRigidBody(self.bulletNodes[limb])
 
         
