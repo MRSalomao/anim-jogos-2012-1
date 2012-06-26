@@ -57,27 +57,6 @@ class Main(ShowBase):
                 debugNP.hide()
         
         self.accept('f1', toggleDebug)
-
-######### Old pursue code        
-        #Creating AI World
-#        self.AIworld = PathWorld(10,10,10)
-#########
-        
-        # loading student_chair model
-        self.studentChairModel = loader.loadModel("../../models/student_chair")
-        self.studentChairGeomNodes = self.studentChairModel.findAllMatches('**/+GeomNode')
-        self.studentChairGeomNode = self.studentChairGeomNodes.getPath(0).node()
-        self.studentChairGeom = self.studentChairGeomNode.getGeom(0)
-        self.studentChairBulletShape = BulletConvexHullShape()
-        self.studentChairBulletShape.addGeom(self.studentChairGeom)
-        self.bulletChairNode = BulletRigidBodyNode('studentchair')
-        self.bulletChairNode.setMass(2.0)
-        self.bulletChairNode.addShape(self.studentChairBulletShape)
-        np = render.attachNewNode(self.bulletChairNode)
-        np.setPos(0,100,-23.10)
-        self.world.attachRigidBody(self.bulletChairNode)
-        self.studentChairModel.flattenLight()
-        self.studentChairModel.reparentTo(np)
         
         # initializing player
         self.player = Player(self)       
@@ -97,15 +76,6 @@ class Main(ShowBase):
             self.world.doPhysics(dt, 4, 1./120.)
             return task.cont
         taskMgr.add(update, 'update')
-
-######### Old pursue code      
-        #to update the AIWorld
-#        def AIUpdate(task):
-#            self.AIworld.update()            
-#            return Task.cont
-        #AI World update        
-#        taskMgr.add(AIUpdate,"AIUpdate")
-#########
 
 main = Main()
 # Starting mainLoop

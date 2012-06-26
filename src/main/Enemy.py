@@ -1,14 +1,9 @@
 from main import Creature
-from panda3d.bullet import BulletBoxShape
 from pandac.PandaModules import *
-from direct.actor.Actor import Actor
-from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
-from panda3d.bullet import BulletDebugNode
-
+from direct.actor.Actor import Actor
 from CharacterBody import *
-
 
 import sys
 
