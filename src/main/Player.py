@@ -29,7 +29,12 @@ class Player(Creature):
 
         self.playerBody = CharacterBody(self.mainRef, Point3(0, 2, 3), .4, 1.2)
         
-        self.mainRef.camera.setPos(0, 0, 1.0)
+        # dummy nodepath for our player; we will attach everything to it
+        self.np = self.mainRef.render.attachNewNode("Player_NP")
+        
+#        self.mainRef.camera.setPos(0, 0, 1.0)
+        self.mainRef.camera.reparentTo( self.np )
+        self.np.setPos(0,0,1.0)
         
         # setting our movementHandler
         self.movementHandler = MovementHandler(self.mainRef)
@@ -55,5 +60,6 @@ class Player(Creature):
         self.mainRef.accept("mouse1", shootBullet)
         
         # attach default weapon
-        self.activeWeapon = Glock(self.mainRef)
+        self.activeWeapon = Glock(self.np)
+        
         

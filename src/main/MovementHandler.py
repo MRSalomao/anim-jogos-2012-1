@@ -112,7 +112,8 @@ class MovementHandler(object):
                 self.playerMoveDirection = Vec3(self.playerMoveSpeedVec)
                 self.playerMoveDirection.normalize()
                         
-                self.mainRef.camera.setPos( self.mainRef.player.playerBody.move(self.playerMoveSpeedVec) )
+#                self.mainRef.camera.setPos( self.mainRef.player.playerBody.move(self.playerMoveSpeedVec) )
+                self.mainRef.player.np.setPos( self.mainRef.player.playerBody.move(self.playerMoveSpeedVec) )
                 self.checkIfChangedRegion()
                 
                 self.playerMoveAccelerationVec.set(0.0, 0.0, 0.0)
@@ -141,7 +142,8 @@ class MovementHandler(object):
                     self.cameraP = 89.9 
                 if(self.cameraP < -89.9): 
                     self.cameraP = -89.9 
-                     
+                
+                self.mainRef.player.np.setHpr(self.cameraH, self.cameraP, 0)     
                 self.mainRef.camera.setHpr(self.cameraH, self.cameraP, 0)
         
                 # This should prevent mouse from going outside of the window
