@@ -32,7 +32,7 @@ class Map(object):
         
         # loading H_Block's colision mesh
         self.H_Block_col = loader.loadModel("../../models/H_Block/H_Block_collision")
-        
+        self.H_Block_col.ls()
         # creating triangle meshes for all static nodes
         self.hBlockRoomGeom = self.H_Block_col.getChild(0).getNode(0).getGeom(0)
         self.hBlockBulletMesh = BulletTriangleMesh()
@@ -41,6 +41,8 @@ class Map(object):
         self.bulletHBlockNode = BulletRigidBodyNode('hBlockNode')
         self.bulletHBlockNode.addShape(self.hBlockBulletShape)
         self.mainRef.world.attachRigidBody(self.bulletHBlockNode)
+        self.mainRef.render.attachNewNode(self.bulletHBlockNode).setCollideMask(BitMask32.allOn())
+        
         
         # arrays containing all regions and portals dividing those regions
         self.convexRegions = []

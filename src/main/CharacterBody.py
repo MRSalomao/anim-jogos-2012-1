@@ -21,7 +21,7 @@ class CharacterBody(object):
         
     def tryToMoveXY(self, speedVec):
         newPositionAttempt = self.position + speedVec     
-        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(.4), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt)) 
+        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(.4), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt), mask = BitMask32.bit(31)) 
         
         if (result.hasHit()):
 #            print "bateu!"
@@ -37,7 +37,7 @@ class CharacterBody(object):
         
     def tryToMoveXY2(self, speedVec):
         newPositionAttempt = self.position + speedVec      
-        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(.3), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt))
+        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(.3), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt), mask = BitMask32.bit(31))
         
         if (result.hasHit()):
 #            print "bateu!"
@@ -51,7 +51,7 @@ class CharacterBody(object):
         
     def tryToMoveZ(self, speedVec):
         feetPosAttempt = self.position + Vec3(0,0,-1) * self.bodyHeight + Vec3(0,0,-0.02) #TODO
-        result = self.mainRef.world.rayTestClosest(self.position, feetPosAttempt + Vec3(0,0,-1) ) # "+Vec3(0,0,-1)" is intended to avoid problems at the borders
+        result = self.mainRef.world.rayTestClosest(self.position, feetPosAttempt + Vec3(0,0,-1), mask = BitMask32.bit(31) ) # "+Vec3(0,0,-1)" is intended to avoid problems at the borders
         self.stepNormal = result.getHitNormal()
         
         if (result.hasHit() and (feetPosAttempt.getZ()) < result.getHitPos().getZ()): # result.getHitPos().getZ() = floorHeight

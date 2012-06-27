@@ -30,7 +30,10 @@ class Player(Creature):
         self.playerBody = CharacterBody(self.mainRef, Point3(0, 2, 3), .4, 1.2)
         
         # dummy nodepath for our player; we will attach everything to it
-        self.np = self.mainRef.render.attachNewNode("Player_NP")
+        
+#        node = BulletRigidBodyNode('Player_NP') 
+#        node.addShape( BulletCapsuleShape(.8, 1.0, ZUp) ) # adicionar node no lugar da string
+        self.np = self.mainRef.render.attachNewNode('Player_Node')
         
 #        self.mainRef.camera.setPos(0, 0, 1.0)
         self.mainRef.camera.wrtReparentTo( self.np )

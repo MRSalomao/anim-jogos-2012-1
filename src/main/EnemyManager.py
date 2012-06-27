@@ -27,7 +27,7 @@ class EnemyManager(object):
             chosen_spawn_point = random.choice(self.spawn_points)
 
             # Creating enemy
-            enemy = Enemy(self.mainRef,'enemy_'+str(i),chosen_spawn_point)
+            enemy = Enemy(self.mainRef,str(i),chosen_spawn_point)
             self.enemys.append(enemy)
             
             # pursue on path find

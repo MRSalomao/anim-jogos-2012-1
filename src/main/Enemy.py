@@ -36,7 +36,7 @@ class Enemy(Creature):
         self.enemyModel.setPos(position)
         
         #enemy's character controller
-        self.enemyBody = CharacterBody(self.mainRef, Point3( self.enemyModel.getPos() ) , .4, .4)
+        self.enemyBody = CharacterBody(self.mainRef, Point3( self.enemyModel.getPos() ) , .01, .9)
         
         # load the zombie's bounding boxes
         self.enemyBB = loader.loadModel("../../models/model_zombie/zombieBB")
@@ -56,7 +56,7 @@ class Enemy(Creature):
         
         # getting 1 by 1 and attaching them to their corresponding bones     
         for bodyPart in bodyParts:
-
+            
             self.bodyPartShape = BulletConvexHullShape()
             self.bodyPartShape.addGeom(self.enemyBB.getChild(0).find(bodyPart).node().getGeom(0))
             
@@ -69,6 +69,7 @@ class Enemy(Creature):
             self.bodyPartNode.setPos(position)
             
             self.mainRef.world.attachRigidBody(self.bulletbodyPartNode)
+            self.bodyPartNode.setCollideMask( BitMask32.bit( int(self.name) ) )
        
             self.bodyPartNode.wrtReparentTo(self.enemyModel.exposeJoint(None,"modelRoot",bodyPart))
             
@@ -96,11 +97,12 @@ class Enemy(Creature):
         #
 #        loadPrcFileData('', 'bullet-enable-contact-events true')
 #        self.mainRef.accept('bullet-contact-added', self.onContactAdded) 
-#        self.partNodes[8].node()#.notifyCollisions(True)
-    
+#        self.partNodes['arm_lr'].node().notifyCollisions(True)
+#    
 #    def onContactAdded(self, node1, node2):
-#        a = 0
-#        print a
+#        if (node1.getName() == ('arm_lr'+self.name) and node2.getName() == () ) 
+#        print node1.getName()
+#        print node2.getName()
 #        # decrease player hp
 #        decreasedHP = int( self.mainRef.playerHUD.guiHp.node().getText() ) - 10
 #        self.mainRef.playerHUD.guiHp.node().setText( str(decreasedHP) )
