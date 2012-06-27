@@ -1,6 +1,7 @@
 from pandac.PandaModules import TextureStage 
 from pandac.PandaModules import NodePath 
-from pandac.PandaModules import CardMaker       
+from pandac.PandaModules import CardMaker
+from pandac.PandaModules import TextNode      
 
 class PlayerHUD(object):
     
@@ -16,6 +17,13 @@ class PlayerHUD(object):
         # crosshair init
         self.crosshairSprite = self.createSprite('../../textures/crosshair.png', self.winSizeX/2, self.winSizeY/2, 16, 16, 1) 
         self.crosshairSprite.reparentTo(sprites_root)
+        
+        # health points
+        hpText=TextNode('hp')
+        hpText.setText( str(self.mainRef.player.healthPoints) )
+        self.guiHp = self.mainRef.aspect2d.attachNewNode(hpText)
+        self.guiHp.setScale(0.07)
+        self.guiHp.setPos(-1.2,0,-0.9)
         
     def createSpritesNodeSetup(self): 
     

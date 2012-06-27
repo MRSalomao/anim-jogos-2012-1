@@ -5,6 +5,8 @@ from direct.actor.Actor import Actor
 from CharacterBody import *
 from Creature import *
 
+from pandac.PandaModules import loadPrcFileData
+
 import sys
 
 class Enemy(Creature):
@@ -90,7 +92,18 @@ class Enemy(Creature):
         
         # attaching to render
         self.enemyModel.wrtReparentTo(self.mainRef.render)
-
+        
+        #
+#        loadPrcFileData('', 'bullet-enable-contact-events true')
+#        self.mainRef.accept('bullet-contact-added', self.onContactAdded) 
+#        self.partNodes[8].node()#.notifyCollisions(True)
+    
+#    def onContactAdded(self, node1, node2):
+#        a = 0
+#        print a
+#        # decrease player hp
+#        decreasedHP = int( self.mainRef.playerHUD.guiHp.node().getText() ) - 10
+#        self.mainRef.playerHUD.guiHp.node().setText( str(decreasedHP) )
         
     def hide(self):
         self.enemyModel.hide()
