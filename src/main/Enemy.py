@@ -69,7 +69,7 @@ class Enemy(Creature):
             self.bodyPartNode.setPos(position)
             
             self.mainRef.world.attachRigidBody(self.bulletbodyPartNode)
-            self.bodyPartNode.setCollideMask( BitMask32.bit( int(self.name) ) )
+            self.bodyPartNode.setCollideMask( BitMask32.bit( int(self.name.split('_')[1] ) ) )
        
             self.bodyPartNode.wrtReparentTo(self.enemyModel.exposeJoint(None,"modelRoot",bodyPart))
             

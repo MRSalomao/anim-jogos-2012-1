@@ -58,7 +58,7 @@ class Player(Creature):
 
             direction = pTo - pFrom
             direction.normalize()
-            result = self.mainRef.world.rayTestClosest(pFrom, pFrom+direction*1000)
+            result = self.mainRef.world.rayTestClosest(pFrom, pFrom+direction*1000, mask = BitMask32.allOn() )
             if (result.hasHit()):
                 self.mainRef.enemyManager.handleShot(result)
             # weapon anim
