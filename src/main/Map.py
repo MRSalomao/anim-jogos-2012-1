@@ -31,7 +31,7 @@ class Map(object):
         self.H_Block.reparentTo(self.mainRef.render)
         
         # loading H_Block's colision mesh
-        self.H_Block_col = loader.loadModel("../../models/H_Block/H_Block_colision2")
+        self.H_Block_col = loader.loadModel("../../models/H_Block/H_Block_collision")
         
         # creating triangle meshes for all static nodes
         self.hBlockRoomGeom = self.H_Block_col.getChild(0).getNode(0).getGeom(0)

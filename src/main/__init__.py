@@ -23,7 +23,7 @@ class Main(ShowBase):
         # disabling Panda's default cameraHandler
         self.disableMouse()
                 
-        # fullscreen and hidden cursor
+        # fullscreen and hi dden cursor
         wp = WindowProperties() 
 #        wp.setFullscreen(True) 
         wp.setCursorHidden(True) 
