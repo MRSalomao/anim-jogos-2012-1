@@ -103,7 +103,7 @@ class Enemy(Creature):
     def pursue(self):
         def pursueStep(task):
             if (self.mainRef.player.currentRegion == self.currentRegion):
-                enemyMovement = self.mainRef.camera.getPos().getXy() - self.enemyModel.getPos().getXy()
+                enemyMovement = self.mainRef.player.np.getPos().getXy() - self.enemyModel.getPos().getXy()
                 enemyMovement.normalize()
                 enemyMovement *= self.speed
                 self.enemyModel.setPos( self.enemyBody.move(Vec3(enemyMovement.getX(), enemyMovement.getY(), 0) ) )

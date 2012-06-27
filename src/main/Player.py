@@ -33,7 +33,7 @@ class Player(Creature):
         self.np = self.mainRef.render.attachNewNode("Player_NP")
         
 #        self.mainRef.camera.setPos(0, 0, 1.0)
-        self.mainRef.camera.reparentTo( self.np )
+        self.mainRef.camera.wrtReparentTo( self.np )
         self.np.setPos(0,0,1.0)
         
         # setting our movementHandler
