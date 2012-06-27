@@ -38,7 +38,10 @@ class Player(Creature):
         
         # setting our movementHandler
         self.movementHandler = MovementHandler(self.mainRef)
-        self.movementHandler.registerFPSMovementInput() 
+        self.movementHandler.registerFPSMovementInput()
+        
+        # attach default weapon
+        self.activeWeapon = Glock(self.np)
 
         def shootBullet():
             # Get from/to points from mouse click
@@ -55,11 +58,12 @@ class Player(Creature):
             result = self.mainRef.world.rayTestClosest(pFrom, pFrom+direction*1000)
             if (result.hasHit()):
                 self.mainRef.enemyManager.handleShot(result)
+            # weapon anim
+            self.activeWeapon.shootAnim()
             
         # adding the shoot event
         self.mainRef.accept("mouse1", shootBullet)
         
-        # attach default weapon
-        self.activeWeapon = Glock(self.np)
+       
         
         

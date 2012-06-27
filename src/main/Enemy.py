@@ -17,7 +17,7 @@ class Enemy(Creature):
         self.name = name
         
         # enemy's pursue speed
-        self.speed = 0.02
+        self.speed = 0.04
         
         # enemy's current convex region; for pursue purposes
         self.currentRegion = 1
