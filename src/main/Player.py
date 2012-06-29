@@ -71,16 +71,33 @@ class Player(Creature):
             self.activeWeapon.shootAnim()
             
         # adding the shoot event
-        self.mainRef.accept("mouse1", shootBullet)      
+        self.mainRef.accept("mouse1", shootBullet)
+        
+        # player boolean to authorize player HP decrease when zombie contact happens
+        self.canLoseHP = True
         
     def onContactAdded(self, node1, node2):
         
         # decrease player's life when zombie contact happen
-        if ( ( ('arm_ll' in node1.getName() ) or (node1.getName() == ('Player_NP') ) ) and ( ('arm_ll' in node2.getName() ) or (node2.getName() == ('Player_NP') ) ) ):
+        if ( ( ('arm_ll' in node1.getName() ) or (node1.getName() == ('Player_NP') ) ) and 
+             ( ('arm_ll' in node2.getName() ) or (node2.getName() == ('Player_NP') ) ) and
+             ( self.canLoseHP ) ):
             
             # decrease player hp
-            decreasedHP = int( self.mainRef.playerHUD.guiHp.node().getText() ) - 10
-            self.mainRef.playerHUD.guiHp.node().setText( str(decreasedHP) )
+            oldHPValue = int( self.mainRef.playerHUD.guiHp.node().getText() )
+            if (oldHPValue > 0):
+                decreasedHP = oldHPValue - 10
+                self.mainRef.playerHUD.guiHp.node().setText( str(decreasedHP) )
+                # block HP loss
+                self.canLoseHP = False
+                # schedule next HP loss release
+                taskMgr.doMethodLater(1, self.releaseHPLoss, 'releaseHPLoss')
+                # TODO: enemy animation call
+                # TODO: screen effect player hurt
+    
+    def releaseHPLoss(self,task):
+        self.canLoseHP = True
+        task.done
        
         
         
