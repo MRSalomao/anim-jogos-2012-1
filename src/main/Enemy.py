@@ -1,11 +1,11 @@
 from pandac.PandaModules import *
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
+from direct.interval.IntervalGlobal import *
 from direct.actor.Actor import Actor
 from CharacterBody import *
 from Creature import *
 
-from pandac.PandaModules import loadPrcFileData
 
 import sys
 
@@ -30,6 +30,10 @@ class Enemy(Creature):
         
         # load our zombie
         self.enemyModel = Actor("../../models/model_zombie/zombie")
+        # ****WE HAVE TO FIX THIS***
+#        self.enemyModel.setH(180)
+#        self.enemyModel.flattenLight()
+        # ****
         # ****SCALE****
         self.enemyModel.setScale(0.4)
         # ****SCALE****
@@ -102,13 +106,39 @@ class Enemy(Creature):
         self.enemyModel.show()
         self.enemyModel.loop("walk")
         
+#    def turnAnim(self,task):
+#        playerVec2 = Vec2(self.mainRef.player.playerNP.getPos().getXy() )
+#        zombieVec2 = Vec2(self.enemyModel.getPos().getXy() )
+#        angle = zombieVec2.signedAngleRad(playerVec2)
+#        self.seq.append( self.enemyModel.hprInterval(1,Point3(self.enemyModel.getH() + angle,self.enemyModel.getP(),self.enemyModel.getR()),
+#                                                 Point3(self.enemyModel.getH(),self.enemyModel.getP(),self.enemyModel.getR()) ) )
+#        self.seq.start()
+#        task.done
+        
     def pursue(self):
         def pursueStep(task):
             if (self.mainRef.player.currentRegion == self.currentRegion):
+                # angle between player and zombie
+                playerVec2 = Vec2(self.mainRef.player.playerNP.getPos().getXy() )
+                zombieVec2 = Vec2(self.enemyModel.getPos().getXy() )
+                angle = zombieVec2.signedAngleRad(playerVec2)
+
+                print angle
+#                if (angle <= 1 and angle >= -1):
+##                    self.enemyModel.setH(self.enemyModel.getH() + angle)
+#                    self.enemyModel.lookAt(self.mainRef.player.playerNP.getX(),
+#                                             self.mainRef.player.playerNP.getY(),
+#                                             self.mainRef.player.playerNP.getZ())
                 enemyMovement = self.mainRef.player.playerNP.getPos().getXy() - self.enemyModel.getPos().getXy()
                 enemyMovement.normalize()
                 enemyMovement *= self.speed
                 self.enemyModel.setPos( self.enemyBody.move(Vec3(enemyMovement.getX(), enemyMovement.getY(), 0) ) )
+#                else:
+#                    self.seq=Sequence()
+#                    if (self.seq.finish())
+#                    taskMgr.doMethodLater(0.5, self.releaseHPLoss, 'releaseHPLoss')
+                    
+#                    print 'parado'
             return task.cont
         taskMgr.add(pursueStep, self.name)
         
