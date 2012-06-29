@@ -19,7 +19,7 @@ class Enemy(Creature):
         self.name = name
         
         # enemy's pursue speed
-        self.speed = 0.04
+        self.speed = 0.02
         
         # enemy's current convex region; for pursue purposes
         self.currentRegion = 1
@@ -36,7 +36,7 @@ class Enemy(Creature):
         self.enemyModel.setPos(position)
         
         #enemy's character controller
-        self.enemyBody = CharacterBody(self.mainRef, Point3( self.enemyModel.getPos() ) , .01, .9)
+        self.enemyBody = CharacterBody(self.mainRef, Point3( self.enemyModel.getPos() ) , .01, .45)
         
         # load the zombie's bounding boxes
         self.enemyBB = loader.loadModel("../../models/model_zombie/zombieBB")
@@ -94,19 +94,6 @@ class Enemy(Creature):
         # attaching to render
         self.enemyModel.wrtReparentTo(self.mainRef.render)
         
-        #
-#        loadPrcFileData('', 'bullet-enable-contact-events true')
-#        self.mainRef.accept('bullet-contact-added', self.onContactAdded) 
-#        self.partNodes['arm_lr'].node().notifyCollisions(True)
-#    
-#    def onContactAdded(self, node1, node2):
-#        if (node1.getName() == ('arm_lr'+self.name) and node2.getName() == () ) 
-#        print node1.getName()
-#        print node2.getName()
-#        # decrease player hp
-#        decreasedHP = int( self.mainRef.playerHUD.guiHp.node().getText() ) - 10
-#        self.mainRef.playerHUD.guiHp.node().setText( str(decreasedHP) )
-        
     def hide(self):
         self.enemyModel.hide()
         
@@ -118,7 +105,7 @@ class Enemy(Creature):
     def pursue(self):
         def pursueStep(task):
             if (self.mainRef.player.currentRegion == self.currentRegion):
-                enemyMovement = self.mainRef.player.np.getPos().getXy() - self.enemyModel.getPos().getXy()
+                enemyMovement = self.mainRef.player.playerNP.getPos().getXy() - self.enemyModel.getPos().getXy()
                 enemyMovement.normalize()
                 enemyMovement *= self.speed
                 self.enemyModel.setPos( self.enemyBody.move(Vec3(enemyMovement.getX(), enemyMovement.getY(), 0) ) )
@@ -142,11 +129,11 @@ class Enemy(Creature):
 #        node = BulletRigidBodyNode('Sphere')
 #        node.setMass(1.0)
 #        node.addShape(shape)
-#        np = self.mainRef.render.attachNewNode(node)
-#        np.setPos(self.enemyModel.exposeJoint(None,"modelRoot",limb).getPos())
-#        np.setPos(np.getRelativePoint(self.partNodes[limb],self.partNodes[limb].getPos()))
-#        np.setPos(60,0,-60)
-#        print np.getRelativePoint(self.partNodes[limb],self.partNodes[limb].getPos())
+#        playerNP = self.mainRef.render.attachNewNode(node)
+#        playerNP.setPos(self.enemyModel.exposeJoint(None,"modelRoot",limb).getPos())
+#        playerNP.setPos(playerNP.getRelativePoint(self.partNodes[limb],self.partNodes[limb].getPos()))
+#        playerNP.setPos(60,0,-60)
+#        print playerNP.getRelativePoint(self.partNodes[limb],self.partNodes[limb].getPos())
 #        print self.partNodes[limb].getPos()
 #        self.mainRef.world.attachRigidBody(node)
 #        

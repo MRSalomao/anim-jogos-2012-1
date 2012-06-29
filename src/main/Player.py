@@ -27,24 +27,30 @@ class Player(Creature):
         
         self.currentRegion = 1
 
-        self.playerBody = CharacterBody(self.mainRef, Point3(0, 2, 3), .4, 1.2)
+        self.playerBody = CharacterBody(self.mainRef, Point3(0, 2, 1.7), .4, 1.7)
         
         # dummy nodepath for our player; we will attach everything to it
         
-#        node = BulletRigidBodyNode('Player_NP') 
-#        node.addShape( BulletCapsuleShape(.8, 1.0, ZUp) ) # adicionar node no lugar da string
-        self.np = self.mainRef.render.attachNewNode('Player_Node')
+        # player bullet node
+        playerNode = BulletRigidBodyNode('Player_NP') 
+        playerNode.addShape( BulletCapsuleShape(1, 1, ZUp) ) # adicionar node no lugar da string
+        self.mainRef.world.attachRigidBody(playerNode)
         
-#        self.mainRef.camera.setPos(0, 0, 1.0)
-        self.mainRef.camera.wrtReparentTo( self.np )
-        self.np.setPos(0,0,1.0)
+        self.playerNP = self.mainRef.render.attachNewNode(playerNode)
+        # this collision mask will only avoid CharacterBody collision on itself
+        self.playerNP.setCollideMask(BitMask32(0x7FFFFFFF))
+        # notify collision contacts
+        self.playerNP.node().notifyCollisions(True)
+        
+        self.mainRef.camera.wrtReparentTo( self.playerNP )
+        self.playerNP.setPos(0,0,1.0)
         
         # setting our movementHandler
         self.movementHandler = MovementHandler(self.mainRef)
         self.movementHandler.registerFPSMovementInput()
         
         # attach default weapon
-        self.activeWeapon = Glock(self.np)
+        self.activeWeapon = Glock(self.playerNP)
 
         def shootBullet():
             # Get from/to points from mouse click
@@ -65,8 +71,16 @@ class Player(Creature):
             self.activeWeapon.shootAnim()
             
         # adding the shoot event
-        self.mainRef.accept("mouse1", shootBullet)
+        self.mainRef.accept("mouse1", shootBullet)      
         
+    def onContactAdded(self, node1, node2):
+        
+        # decrease player's life when zombie contact happen
+        if ( ( ('arm_ll' in node1.getName() ) or (node1.getName() == ('Player_NP') ) ) and ( ('arm_ll' in node2.getName() ) or (node2.getName() == ('Player_NP') ) ) ):
+            
+            # decrease player hp
+            decreasedHP = int( self.mainRef.playerHUD.guiHp.node().getText() ) - 10
+            self.mainRef.playerHUD.guiHp.node().setText( str(decreasedHP) )
        
         
         

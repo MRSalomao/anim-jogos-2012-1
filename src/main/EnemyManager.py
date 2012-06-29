@@ -12,7 +12,7 @@ class EnemyManager(object):
         self.enemys = []
         
         # List of points 3-D space in which enemies can spawn at
-        self.spawn_points = [(2, 2, 3),(-2,-2,3),(1,1,3),(-1,-1,3),(2,3,3),(-2,-1,3),(-1,-2,3),(-1,3,3)]
+        self.spawn_points = [(2, 2, 2),(-2,-2,2),(1,1,2),(-1,-1,2),(2,3,2),(-2,-1,2),(-1,-2,2),(-1,3,2)]
 
         # start
         taskMgr.doMethodLater(2.0, self.startInvasion, 'Start Invasion')
@@ -34,7 +34,7 @@ class EnemyManager(object):
             enemy.pursue()
         
     def startInvasion(self,task):
-        self.startRandomInvasion(2)
+        self.startRandomInvasion(1)
         
         return task.done
 

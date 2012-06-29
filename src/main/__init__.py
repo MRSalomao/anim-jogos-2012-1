@@ -55,11 +55,16 @@ class Main(ShowBase):
                 debugNP.show()
             else:
                 debugNP.hide()
+                
+        # activate bullet contact notification
+        loadPrcFileData('', 'bullet-enable-contact-events true')
         
         self.accept('f1', toggleDebug)
         
         # initializing player
-        self.player = Player(self)       
+        self.player = Player(self)
+        # allow player collision contact handling
+        self.accept('bullet-contact-added', self.player.onContactAdded)      
         
         # initializing map
         self.map = Map(self)
