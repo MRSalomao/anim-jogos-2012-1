@@ -15,7 +15,7 @@ class Glock(Weapon):
         # ****SCALE****
         self.weaponModel.setScale(0.1)
         # ***POS***
-        self.weaponModel.setPos(0.4,1.5,0.5)
+        self.weaponModel.setPos(0.6,2.2,0.5)
         # ****HPR****
         self.weaponModel.setHpr(280,0,2)
         # attaching to render

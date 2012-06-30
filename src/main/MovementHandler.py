@@ -143,7 +143,8 @@ class MovementHandler(object):
                 if(self.cameraP < -89.9): 
                     self.cameraP = -89.9 
                 
-                self.mainRef.player.playerNP.setHpr(self.cameraH, self.cameraP, 0)     
+                self.mainRef.camera.setHpr(self.cameraH, self.cameraP, 0)
+#                self.mainRef.player.playerNP.setHpr(self.cameraH, self.cameraP, 0)     
         
                 # This should prevent mouse from going outside of the window
                 self.mainRef.win.movePointer(0, winSizeX/2, winSizeY/2)

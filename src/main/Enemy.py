@@ -28,19 +28,18 @@ class Enemy(Creature):
         self.hitPoints = {'leg_lr':2, 'leg_ll':2, 'arm_lr':2, 'arm_ll':2}
         self.lifePoints = 100
         
+        # enemy NodePath
+        self.enemyNP = self.mainRef.render.attachNewNode(self.name)
+        self.enemyNP.setPos(position)
+        
         # load our zombie
         self.enemyModel = Actor("../../models/model_zombie/zombie")
-        # ****WE HAVE TO FIX THIS***
-#        self.enemyModel.setH(180)
-#        self.enemyModel.flattenLight()
-        # ****
         # ****SCALE****
-        self.enemyModel.setScale(0.4)
+        self.enemyModel.setScale(0.55)
         # ****SCALE****
-        self.enemyModel.setPos(position)
         
         #enemy's character controller
-        self.enemyBody = CharacterBody(self.mainRef, Point3( self.enemyModel.getPos() ) , .01, .45)
+        self.enemyBody = CharacterBody(self.mainRef, self.enemyNP.getPos(), position.getZ(), position.getZ() )
         
         # load the zombie's bounding boxes
         self.enemyBB = loader.loadModel("../../models/model_zombie/zombieBB")
@@ -68,9 +67,8 @@ class Enemy(Creature):
             self.bulletbodyPartNode.addShape(self.bodyPartShape)
             self.bodyPartNode = self.mainRef.render.attachNewNode(self.bulletbodyPartNode)
             # ****SCALE****
-            self.bodyPartNode.setScale(0.4)
+            self.bodyPartNode.setScale(0.5)
             # ****SCALE****
-            self.bodyPartNode.setPos(position)
             
             self.mainRef.world.attachRigidBody(self.bulletbodyPartNode)
             self.bodyPartNode.setCollideMask( BitMask32.bit( int(self.name.split('_')[1] ) ) )
@@ -96,7 +94,7 @@ class Enemy(Creature):
         self.enemyModel.loop("walk")
         
         # attaching to render
-        self.enemyModel.wrtReparentTo(self.mainRef.render)
+        self.enemyModel.reparentTo(self.enemyNP)
         
     def hide(self):
         self.enemyModel.hide()
@@ -106,40 +104,51 @@ class Enemy(Creature):
         self.enemyModel.show()
         self.enemyModel.loop("walk")
         
-#    def turnAnim(self,task):
-#        playerVec2 = Vec2(self.mainRef.player.playerNP.getPos().getXy() )
-#        zombieVec2 = Vec2(self.enemyModel.getPos().getXy() )
-#        angle = zombieVec2.signedAngleRad(playerVec2)
-#        self.seq.append( self.enemyModel.hprInterval(1,Point3(self.enemyModel.getH() + angle,self.enemyModel.getP(),self.enemyModel.getR()),
-#                                                 Point3(self.enemyModel.getH(),self.enemyModel.getP(),self.enemyModel.getR()) ) )
-#        self.seq.start()
-#        task.done
-        
     def pursue(self):
+        
+        self.isTurnAnimOk = True
+        self.rotAngle = 0
+        self.lastRotAngle = 0
+        
         def pursueStep(task):
             if (self.mainRef.player.currentRegion == self.currentRegion):
-                # angle between player and zombie
-                playerVec2 = Vec2(self.mainRef.player.playerNP.getPos().getXy() )
-                zombieVec2 = Vec2(self.enemyModel.getPos().getXy() )
-                angle = zombieVec2.signedAngleRad(playerVec2)
-
-                print angle
-#                if (angle <= 1 and angle >= -1):
-##                    self.enemyModel.setH(self.enemyModel.getH() + angle)
-#                    self.enemyModel.lookAt(self.mainRef.player.playerNP.getX(),
-#                                             self.mainRef.player.playerNP.getY(),
-#                                             self.mainRef.player.playerNP.getZ())
-                enemyMovement = self.mainRef.player.playerNP.getPos().getXy() - self.enemyModel.getPos().getXy()
-                enemyMovement.normalize()
-                enemyMovement *= self.speed
-                self.enemyModel.setPos( self.enemyBody.move(Vec3(enemyMovement.getX(), enemyMovement.getY(), 0) ) )
-#                else:
-#                    self.seq=Sequence()
-#                    if (self.seq.finish())
-#                    taskMgr.doMethodLater(0.5, self.releaseHPLoss, 'releaseHPLoss')
-                    
-#                    print 'parado'
+                
+                playerDir = Vec2(self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
+                zombieDir = Vec2(0,-1) # TODO: Fix this signal by rotation zombie's blender model
+                self.lastRotAngle = self.rotAngle
+                self.rotAngle = zombieDir.signedAngleDeg(playerDir)
+                
+                deltaRotAngle = self.rotAngle - self.lastRotAngle
+                
+                if (deltaRotAngle <= 3 and deltaRotAngle >= -3 and self.isTurnAnimOk):
+                    # linear move
+                    enemyMovement = self.mainRef.player.playerNP.getPos().getXy() - self.enemyNP.getPos().getXy()
+                    enemyMovement.normalize()
+                    enemyMovement *= self.speed
+                    self.enemyNP.setPos( self.enemyBody.move(Vec3(enemyMovement.getX(), enemyMovement.getY(), 0) ) )
+                    # "look at" player
+                    self.enemyModel.setH(self.rotAngle)
+                else:
+                    if(self.isTurnAnimOk):
+                        self.isTurnAnimOk = False
+                        turnAnim()   
             return task.cont
+        
+        def turnAnim():
+            # "look at" player
+            seq=Sequence()
+            seq.append(self.enemyModel.hprInterval(3,Point3(self.rotAngle,0,0),Point3(self.lastRotAngle,0,0) ) )
+            seq.start()
+            taskMgr.doMethodLater(3, releaseTurnAnim, 'releaseturnAnim') 
+        
+        def releaseTurnAnim(task):
+            playerDir = Vec2(self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
+            zombieDir = Vec2(0,-1) # TODO: Fix this signal by rotation zombie's blender model
+            self.lastRotAngle = self.rotAngle
+            self.rotAngle = zombieDir.signedAngleDeg(playerDir)
+            self.isTurnAnimOk = True
+            task.done
+            
         taskMgr.add(pursueStep, self.name)
         
     def destroy(self):

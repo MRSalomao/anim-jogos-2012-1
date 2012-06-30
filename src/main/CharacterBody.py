@@ -6,13 +6,13 @@ class CharacterBody(object):
     def __init__(self, mainReference, initialPosition, bodyRadius, bodyHeight):
         self.mainRef = mainReference
         self.position = initialPosition
-        self.bodyRadius = bodyRadius # not in use
+        self.bodyRadius = bodyRadius
         self.bodyHeight = bodyHeight
         self.stepNormal = ZUp
         
         self.accelerationStep = -9,81 / 60.0
         
-        self.nextPosition = self.position
+        self.nextPosition = self.position # not in use
         
     def move(self, speedVec):
         self.tryToMoveXY(speedVec)
@@ -21,7 +21,7 @@ class CharacterBody(object):
         
     def tryToMoveXY(self, speedVec):
         newPositionAttempt = self.position + speedVec     
-        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(.4), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt), mask = BitMask32.bit(31)) 
+        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(self.bodyRadius), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt), mask = BitMask32.bit(31)) 
         
         if (result.hasHit()):
 #            print "bateu!"
@@ -37,7 +37,7 @@ class CharacterBody(object):
         
     def tryToMoveXY2(self, speedVec):
         newPositionAttempt = self.position + speedVec      
-        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(.3), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt), mask = BitMask32.bit(31))
+        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(self.bodyRadius-0.1), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt), mask = BitMask32.bit(31))
         
         if (result.hasHit()):
 #            print "bateu!"

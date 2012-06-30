@@ -33,7 +33,7 @@ class Player(Creature):
         
         # player bullet node
         playerNode = BulletRigidBodyNode('Player_NP') 
-        playerNode.addShape( BulletCapsuleShape(1, 1, ZUp) ) # adicionar node no lugar da string
+        playerNode.addShape( BulletCapsuleShape(0.3, 1, ZUp) ) # adicionar node no lugar da string
         self.mainRef.world.attachRigidBody(playerNode)
         
         self.playerNP = self.mainRef.render.attachNewNode(playerNode)
@@ -42,7 +42,11 @@ class Player(Creature):
         # notify collision contacts
         self.playerNP.node().notifyCollisions(True)
         
-        self.mainRef.camera.wrtReparentTo( self.playerNP )
+        self.mainRef.camera.reparentTo( self.playerNP )
+        # eyes height
+        self.mainRef.camera.setZ(0.2)
+        
+        # NodePath position
         self.playerNP.setPos(0,0,1.0)
         
         # setting our movementHandler
@@ -50,7 +54,7 @@ class Player(Creature):
         self.movementHandler.registerFPSMovementInput()
         
         # attach default weapon
-        self.activeWeapon = Glock(self.playerNP)
+        self.activeWeapon = Glock(self.mainRef.camera)
 
         def shootBullet():
             # Get from/to points from mouse click
