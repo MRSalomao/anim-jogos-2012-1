@@ -112,6 +112,8 @@ class Enemy(Creature):
         self.lostTargetTotalTime = 1.0
 
         self.lostTargetTimer = self.lostTargetTotalTime
+        
+        self.activeState = ""
 
         def pursueTargetStep(task):
             if (self.mainRef.player.currentRegion == self.currentRegion):
@@ -129,7 +131,8 @@ class Enemy(Creature):
                 
                 if (abs(rotationAngle) > 120 * globalClock.getDt()):
                     self.lostTargetTimer = self.lostTargetTotalTime
-                    taskMgr.add(lostTargetStep, self.name + "lt")
+                    self.activeState = self.name + "lt"
+                    taskMgr.add(lostTargetStep, self.activeState)
                     return task.done
                  
             return task.cont
@@ -140,7 +143,8 @@ class Enemy(Creature):
             self.lostTargetTimer -= globalClock.getDt()
             
             if (self.lostTargetTimer < 0):
-                taskMgr.add(recoverTargetStep, self.name + "rt") 
+                self.activeState = self.name + "rt"
+                taskMgr.add(recoverTargetStep, self.activeState) 
                 return task.done
             
             return task.cont
@@ -154,7 +158,8 @@ class Enemy(Creature):
             self.enemyModel.setH(self.enemyModel.getH() + rotationAngle)
 
             if (abs(targetDirectionAngle) < 5):
-                taskMgr.add(pursueTargetStep, self.name + "pt") 
+                self.activeState = self.name + "pt"
+                taskMgr.add(pursueTargetStep, self.activeState) 
                 return task.done
             
             return task.cont
@@ -162,7 +167,7 @@ class Enemy(Creature):
         taskMgr.add(pursueTargetStep, self.name + 'pt')
         
     def destroy(self):
-        taskMgr.remove( str(self.name) )
+        taskMgr.remove( self.activeState )
         self.enemyModel.cleanup()
         self.enemyBB.removeNode()
         for node in self.bulletNodes.keys():
