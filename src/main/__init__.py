@@ -60,7 +60,7 @@ class Main(ShowBase):
         loadPrcFileData('', 'bullet-enable-contact-events true')
         
         self.accept('f1', toggleDebug)
-        
+
         # initializing player
         self.player = Player(self)
         # allow player collision contact handling

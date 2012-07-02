@@ -5,6 +5,7 @@ from direct.interval.IntervalGlobal import *
 from direct.actor.Actor import Actor
 from CharacterBody import *
 from Creature import *
+from math import *
 
 
 import sys
@@ -18,8 +19,11 @@ class Enemy(Creature):
         # unique enemy name
         self.name = name
         
-        # enemy's pursue speed
-        self.speed = 0.02
+        # enemy's pursue speed P-units/s
+        self.speed = 1.2
+        
+        # enemy's rotation speed angles/s
+        self.rotSpeed = 10
         
         # enemy's current convex region; for pursue purposes
         self.currentRegion = 1
@@ -67,7 +71,7 @@ class Enemy(Creature):
             self.bulletbodyPartNode.addShape(self.bodyPartShape)
             self.bodyPartNode = self.mainRef.render.attachNewNode(self.bulletbodyPartNode)
             # ****SCALE****
-            self.bodyPartNode.setScale(0.5)
+            self.bodyPartNode.setScale(0.55)
             # ****SCALE****
             
             self.mainRef.world.attachRigidBody(self.bulletbodyPartNode)
@@ -105,51 +109,57 @@ class Enemy(Creature):
         self.enemyModel.loop("walk")
         
     def pursue(self):
-        
-        self.isTurnAnimOk = True
-        self.rotAngle = 0
-        self.lastRotAngle = 0
-        
-        def pursueStep(task):
+        self.lostTargetTotalTime = 1.0
+
+        self.lostTargetTimer = self.lostTargetTotalTime
+
+        def pursueTargetStep(task):
             if (self.mainRef.player.currentRegion == self.currentRegion):
                 
-                playerDir = Vec2(self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
-                zombieDir = Vec2(0,-1) # TODO: Fix this signal by rotation zombie's blender model
-                self.lastRotAngle = self.rotAngle
-                self.rotAngle = zombieDir.signedAngleDeg(playerDir)
+                targetDirection = Vec2( self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
+                targetDirectionAngle = Vec2(-sin(radians(self.enemyModel.getH())), 
+                                             cos(radians(self.enemyModel.getH())) ).signedAngleDeg(targetDirection)
+
+                rotationAngle = targetDirectionAngle * self.rotSpeed * globalClock.getDt()
+                self.enemyModel.setH(self.enemyModel.getH() + rotationAngle)
+
+                targetDirection.normalize()
+                playerMoveSpeedVec = targetDirection * self.speed * globalClock.getDt()
+                self.enemyNP.setPos( self.enemyBody.move(Vec3(playerMoveSpeedVec.getX(), playerMoveSpeedVec.getY(), 0) ) )                
                 
-                deltaRotAngle = self.rotAngle - self.lastRotAngle
-                
-                if (deltaRotAngle <= 3 and deltaRotAngle >= -3 and self.isTurnAnimOk):
-                    # linear move
-                    enemyMovement = self.mainRef.player.playerNP.getPos().getXy() - self.enemyNP.getPos().getXy()
-                    enemyMovement.normalize()
-                    enemyMovement *= self.speed
-                    self.enemyNP.setPos( self.enemyBody.move(Vec3(enemyMovement.getX(), enemyMovement.getY(), 0) ) )
-                    # "look at" player
-                    self.enemyModel.setH(self.rotAngle)
-                else:
-                    if(self.isTurnAnimOk):
-                        self.isTurnAnimOk = False
-                        turnAnim()   
+                if (abs(rotationAngle) > 120 * globalClock.getDt()):
+                    self.lostTargetTimer = self.lostTargetTotalTime
+                    taskMgr.add(lostTargetStep, self.name + "lt")
+                    return task.done
+                 
             return task.cont
         
-        def turnAnim():
-            # "look at" player
-            seq=Sequence()
-            seq.append(self.enemyModel.hprInterval(3,Point3(self.rotAngle,0,0),Point3(self.lastRotAngle,0,0) ) )
-            seq.start()
-            taskMgr.doMethodLater(3, releaseTurnAnim, 'releaseturnAnim') 
-        
-        def releaseTurnAnim(task):
-            playerDir = Vec2(self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
-            zombieDir = Vec2(0,-1) # TODO: Fix this signal by rotation zombie's blender model
-            self.lastRotAngle = self.rotAngle
-            self.rotAngle = zombieDir.signedAngleDeg(playerDir)
-            self.isTurnAnimOk = True
-            task.done
+        def lostTargetStep(task):
+            self.enemyNP.setPos( self.enemyBody.move(Vec3(-sin(radians(self.enemyModel.getH())) * self.speed * globalClock.getDt(),
+                                                           cos(radians(self.enemyModel.getH())) * self.speed * globalClock.getDt(), 0) ) )
+            self.lostTargetTimer -= globalClock.getDt()
             
-        taskMgr.add(pursueStep, self.name)
+            if (self.lostTargetTimer < 0):
+                taskMgr.add(recoverTargetStep, self.name + "rt") 
+                return task.done
+            
+            return task.cont
+            
+        def recoverTargetStep(task):
+            targetDirection = Vec2( self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
+            targetDirectionAngle = Vec2(-sin(radians(self.enemyModel.getH())), 
+                                         cos(radians(self.enemyModel.getH())) ).signedAngleDeg(targetDirection)
+
+            rotationAngle = targetDirectionAngle * self.rotSpeed * globalClock.getDt()
+            self.enemyModel.setH(self.enemyModel.getH() + rotationAngle)
+
+            if (abs(targetDirectionAngle) < 5):
+                taskMgr.add(pursueTargetStep, self.name + "pt") 
+                return task.done
+            
+            return task.cont
+                    
+        taskMgr.add(pursueTargetStep, self.name + 'pt')
         
     def destroy(self):
         taskMgr.remove( str(self.name) )
