@@ -6,6 +6,7 @@ from panda3d.bullet import BulletCapsuleShape
 from panda3d.bullet import BulletCylinderShape
 from panda3d.bullet import ZUp
 from CharacterBody import *
+from direct.particles.ParticleEffect import ParticleEffect
 
 from Glock import *
 from Creature import *
@@ -55,30 +56,51 @@ class Player(Creature):
         
         # attach default weapon
         self.activeWeapon = Glock(self.mainRef.camera)
-
-        def shootBullet():
-            # Get from/to points from mouse click
-            pMouse = base.mouseWatcherNode.getMouse()
-            pFrom = Point3()
-            pTo = Point3()
-            base.camLens.extrude(pMouse, pFrom, pTo)
-            
-            pFrom = render.getRelativePoint(base.cam, pFrom)
-            pTo = render.getRelativePoint(base.cam, pTo)
-
-            direction = pTo - pFrom
-            direction.normalize()
-            result = self.mainRef.world.rayTestClosest(pFrom, pFrom+direction*1000, mask = BitMask32.allOn() )
-            if (result.hasHit()):
-                self.mainRef.enemyManager.handleShot(result)
-            # weapon anim
-            self.activeWeapon.shootAnim()
             
         # adding the shoot event
-        self.mainRef.accept("mouse1", shootBullet)
+        self.mainRef.accept("mouse1", self.shootBullet)
         
         # player boolean to authorize player HP decrease when zombie contact happens
         self.canLoseHP = True
+
+
+    def shootParticles(self,collision_result):
+        "Summons and explosion of particles where the player shot."
+        # Create Particle
+        p = ParticleEffect()
+        p.loadConfig("../../models/particle_shot.ptf")
+        
+        # Put particle at shot point
+        p.setPos(collision_result.getHitPos())        
+        p.start(parent = self.mainRef.render, renderParent = self.mainRef.render)
+
+        # Schedule particle effect cleanup
+        particle_timeout = 0.2 # Time in seconds for the particle effect to fade
+        taskMgr.doMethodLater(particle_timeout, self.releaseParticle, 'Particle Effect Cleanup', extraArgs = [p])
+
+
+
+    def shootBullet(self):
+        # Get from/to points from mouse click
+        pMouse = base.mouseWatcherNode.getMouse()
+        pFrom = Point3()
+        pTo = Point3()
+        base.camLens.extrude(pMouse, pFrom, pTo)
+        
+        pFrom = render.getRelativePoint(base.cam, pFrom)
+        pTo = render.getRelativePoint(base.cam, pTo)
+
+        direction = pTo - pFrom
+        direction.normalize()
+        result = self.mainRef.world.rayTestClosest(pFrom, pFrom+direction*1000, mask = BitMask32.allOn() )
+
+        # Shoot particles
+        self.shootParticles(result)
+
+        if (result.hasHit()):
+            self.mainRef.enemyManager.handleShot(result)
+        # weapon anim
+        self.activeWeapon.shootAnim()
         
     def onContactAdded(self, node1, node2):
         
@@ -103,5 +125,8 @@ class Player(Creature):
         self.canLoseHP = True
         task.done
        
+    def releaseParticle(self,particle_system):
+        "Cleanup particle effect after timeout"
+        particle_system.cleanup()
         
         

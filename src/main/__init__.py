@@ -35,6 +35,9 @@ class Main(ShowBase):
         # activating fps
         base.setFrameRateMeter(True)
 
+        # Enable particles
+        base.enableParticles()
+
         # Bullet debug purposes
         debugNode = BulletDebugNode('Debug')
         debugNode.showWireframe(True)
