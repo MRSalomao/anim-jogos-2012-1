@@ -53,9 +53,10 @@ class Map(object):
         self.portalsGeometry.reparentTo(self.mainRef.render)
         
         # Regions
+        self.convexRegions.append( Region(0) ) # Just making the  access to convexRegions easier
         for convexRegion in self.convexRegionsGeometry.getChild(0).getChildren():
             regionNode = convexRegion.getNode(0)
-            regionID = regionNode.getTag("prop")
+            regionID = int( regionNode.getTag("prop") )
             self.convexRegions.append( Region(regionID) )
 
             # Get vertices that define the convex region
@@ -65,7 +66,7 @@ class Map(object):
                 X = data.getX()
                 Y = data.getY()
                 Z = data.getZ()
-                self.convexRegions[-1].vertices.append((X,Y,Z))
+                self.convexRegions[-1].vertices.append(Vec3(X,Y,Z))
                 
         self.convexRegions = sorted(self.convexRegions, key=lambda convexRegion: convexRegion.regionID)
         # Debug
@@ -83,17 +84,14 @@ class Map(object):
                 data = vertexReader.getData3()
                 X = data.getX()
                 Y = data.getY()
-                Z = data.getZ()
-                frontiers.append(Vec3(X,Y,Z))
+                frontiers.append(Vec2(X,Y))
                
-            connectedRegionsIDs = map(int, portalNode.getTag("prop").split(','))   
+            connectedRegionsIDs = map(int, portalNode.getTag("prop").split(','))
       
-            self.portals.append( Portal(connectedRegionsIDs, frontiers) )  
+            self.portals.append( Portal(connectedRegionsIDs, frontiers) )
             
-            self.convexRegions[ connectedRegionsIDs[0] - 1 ].neighbourIDs.append( connectedRegionsIDs[1] )
-            self.convexRegions[ connectedRegionsIDs[0] - 1 ].portalsList.append( self.portals[-1] )
-            self.convexRegions[ connectedRegionsIDs[1] - 1 ].neighbourIDs.append (connectedRegionsIDs[0] )
-            self.convexRegions[ connectedRegionsIDs[1] - 1 ].portalsList.append( self.portals[-1] )
+            self.convexRegions[ connectedRegionsIDs[0] ].portalEntrancesList.append( PortalEntrance( self.portals[-1], connectedRegionsIDs[1] ) )
+            self.convexRegions[ connectedRegionsIDs[1] ].portalEntrancesList.append( PortalEntrance( self.portals[-1], connectedRegionsIDs[0] ) )
         # Debug    
 #        for portal in self.portals: 
 #            print portal.connectedRegionsIDs

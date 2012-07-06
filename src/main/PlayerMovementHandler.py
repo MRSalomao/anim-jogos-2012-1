@@ -112,7 +112,6 @@ class MovementHandler(object):
                 self.playerMoveDirection = Vec3(self.playerMoveSpeedVec)
                 self.playerMoveDirection.normalize()
                         
-#                self.mainRef.camera.setPos( self.mainRef.player.playerBody.move(self.playerMoveSpeedVec) )
                 self.mainRef.player.playerNP.setPos( self.mainRef.player.playerBody.move(self.playerMoveSpeedVec) )
                 self.checkIfChangedRegion()
                 
@@ -143,8 +142,7 @@ class MovementHandler(object):
                 if(self.cameraP < -89.9): 
                     self.cameraP = -89.9 
                 
-                self.mainRef.camera.setHpr(self.cameraH, self.cameraP, 0)
-#                self.mainRef.player.playerNP.setHpr(self.cameraH, self.cameraP, 0)     
+                self.mainRef.player.playerHeadNP.setHpr(self.cameraH, self.cameraP, 0)     
         
                 # This should prevent mouse from going outside of the window
                 self.mainRef.win.movePointer(0, winSizeX/2, winSizeY/2)
@@ -155,20 +153,26 @@ class MovementHandler(object):
     
     
     def checkIfChangedRegion(self, lastRegion=0):
-        i = 0
-        for portal in self.mainRef.map.convexRegions[self.mainRef.player.currentRegion - 1].portalsList:
+
+        for portalEntrance in self.mainRef.map.convexRegions[self.mainRef.player.currentRegionID].portalEntrancesList:
             
-            if ( self.intersect( self.oldPosition, self.mainRef.camera.getPos(), portal.frontiers[0], portal.frontiers[1] )
-                 and portal.connectedRegionsIDs[0] != lastRegion 
-                 and portal.connectedRegionsIDs[1] != lastRegion ):
-                lr = self.mainRef.player.currentRegion
-                self.mainRef.player.currentRegion = self.mainRef.map.convexRegions[self.mainRef.player.currentRegion - 1].neighbourIDs[i]
-                print "Player region changed: ", lr, ">", self.mainRef.player.currentRegion
-                self.checkIfChangedRegion(lr)
+            if ( self.intersect( self.oldPosition, self.mainRef.player.playerNP.getPos(), 
+                                 portalEntrance.portal.frontiers[0], portalEntrance.portal.frontiers[1] )
+                                 and portalEntrance.portal.connectedRegionsIDs[0] != lastRegion 
+                                 and portalEntrance.portal.connectedRegionsIDs[1] != lastRegion ):
                 
-            i += 1
+                oldRegion = self.mainRef.player.currentRegionID
+                self.mainRef.player.currentRegionID = portalEntrance.connectedRegionID
+                
+                # Debug
+                print "Player region changed: ", oldRegion, ">", self.mainRef.player.currentRegionID
+                
+                # alert all enemys
+                self.mainRef.enemyManager.disseminateTargetNewRegion()
+                # check again
+                self.checkIfChangedRegion(oldRegion)
         
-        self.oldPosition = self.mainRef.camera.getPos()
+        self.oldPosition = self.mainRef.player.playerNP.getPos()
               
 
     def ccw(self, A,B,C):

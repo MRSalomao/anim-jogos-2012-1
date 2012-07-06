@@ -1,3 +1,5 @@
+from pandac.PandaModules import *
+
 class Creature(object):
     
     def __init__(self, mainReference):

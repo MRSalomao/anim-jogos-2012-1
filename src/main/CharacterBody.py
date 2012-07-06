@@ -10,9 +10,21 @@ class CharacterBody(object):
         self.bodyHeight = bodyHeight
         self.stepNormal = ZUp
         
-        self.accelerationStep = -9,81 / 60.0
+        # character body's sphere shape
+        self.charBodySphereShape = BulletSphereShape(bodyRadius)
+        self.charBodySphereShapeMinor = BulletSphereShape(bodyRadius - 0.1)
         
-        self.nextPosition = self.position # not in use
+        collisionNode = BulletRigidBodyNode()
+        collisionNode.addShape(self.charBodySphereShape)
+        self.mainRef.world.attachRigidBody(collisionNode)
+        
+        self.charBodyNP = self.mainRef.render.attachNewNode(collisionNode)
+        # this collision mask will only avoid CharacterBody collision on itself
+        self.charBodyNP.setCollideMask(BitMask32(0x7FFFFFFF))
+        
+        self.accelerationStep = -9.81 / 60.0
+        self.fallingSpeed = Vec3(0,0,0)
+
         
     def move(self, speedVec):
         self.tryToMoveXY(speedVec)
@@ -21,10 +33,13 @@ class CharacterBody(object):
         
     def tryToMoveXY(self, speedVec):
         newPositionAttempt = self.position + speedVec     
-        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(self.bodyRadius), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt), mask = BitMask32.bit(31)) 
+        result = self.mainRef.world.sweepTestClosest(self.charBodySphereShape, 
+                                                     TransformState.makePos(self.position), 
+                                                     TransformState.makePos(newPositionAttempt), 
+                                                     mask = BitMask32.bit(31),
+                                                     penetration = .001) 
         
         if (result.hasHit()):
-#            print "bateu!"
             intermediatePosition = self.position + speedVec * result.getHitFraction()
             remainingMovement = newPositionAttempt - intermediatePosition
             colisionNormal = result.getHitNormal()
@@ -37,28 +52,29 @@ class CharacterBody(object):
         
     def tryToMoveXY2(self, speedVec):
         newPositionAttempt = self.position + speedVec      
-        result = self.mainRef.world.sweepTestClosest(BulletSphereShape(self.bodyRadius-0.1), TransformState.makePos(self.position), TransformState.makePos(newPositionAttempt), mask = BitMask32.bit(31))
+        result = self.mainRef.world.sweepTestClosest(self.charBodySphereShapeMinor, 
+                                                     TransformState.makePos(self.position), 
+                                                     TransformState.makePos(newPositionAttempt), 
+                                                     mask = BitMask32.bit(31),
+                                                     penetration = .001)
         
         if (result.hasHit()):
-#            print "bateu!"
-#            print self.position
-#            print speedVec, "speedVec"
-#            print result.getHitFraction()
-#            print ""
             self.position = self.position + speedVec * result.getHitFraction()
         else:
             self.position = newPositionAttempt
         
     def tryToMoveZ(self, speedVec):
-        feetPosAttempt = self.position + Vec3(0,0,-1) * self.bodyHeight + Vec3(0,0,-0.02) #TODO
+        self.fallingSpeed.addZ( self.accelerationStep * globalClock.getDt() ) 
+        feetPosAttempt = self.position + Vec3(0,0,-1) * self.bodyHeight + self.fallingSpeed
         result = self.mainRef.world.rayTestClosest(self.position, feetPosAttempt + Vec3(0,0,-1), mask = BitMask32.bit(31) ) # "+Vec3(0,0,-1)" is intended to avoid problems at the borders
         self.stepNormal = result.getHitNormal()
         
         if (result.hasHit() and (feetPosAttempt.getZ()) < result.getHitPos().getZ()): # result.getHitPos().getZ() = floorHeight
             self.position = result.getHitPos() + Vec3(0,0,1) * self.bodyHeight
+            self.fallingSpeed = Vec3(0,0,0)
         
         else:  
-            self.position = self.position + Vec3(0,0,-0.02)
+            self.position = self.position + self.fallingSpeed
         
         
         

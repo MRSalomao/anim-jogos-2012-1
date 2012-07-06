@@ -9,11 +9,12 @@ from math import *
 
 
 import sys
+import random
 
 class Enemy(Creature):
     
     def __init__(self, mainReference, name, position):
-        self.mainRef = mainReference
+        
         super(Enemy, self).__init__(mainReference)
         
         # unique enemy name
@@ -26,7 +27,7 @@ class Enemy(Creature):
         self.rotSpeed = 10
         
         # enemy's current convex region; for pursue purposes
-        self.currentRegion = 1
+        self.currentRegionID = 1
         
         # Hit Points of each part of zombie
         self.hitPoints = {'leg_lr':2, 'leg_ll':2, 'arm_lr':2, 'arm_ll':2}
@@ -36,6 +37,12 @@ class Enemy(Creature):
         self.enemyNP = self.mainRef.render.attachNewNode(self.name)
         self.enemyNP.setPos(position)
         
+        # the name of the task the zombie is currently performing
+        self.enemyActiveState = ""
+        
+        # the cross point of the portal that the zombie is trying to cross
+        self.currentCrossPointGoal = None
+        
         # load our zombie
         self.enemyModel = Actor("../../models/model_zombie/zombie")
         # ****SCALE****
@@ -43,7 +50,8 @@ class Enemy(Creature):
         # ****SCALE****
         
         #enemy's character controller
-        self.enemyBody = CharacterBody(self.mainRef, self.enemyNP.getPos(), position.getZ(), position.getZ() )
+        self.enemyBody = CharacterBody(self.mainRef, self.enemyNP.getPos(), 0.4, 1 )
+        self.enemyBody.charBodyNP.reparentTo(self.enemyNP)
         
         # load the zombie's bounding boxes
         self.enemyBB = loader.loadModel("../../models/model_zombie/zombieBB")
@@ -93,12 +101,31 @@ class Enemy(Creature):
 #            self.mainRef.world.attachRigidBody(self.bulletbodyPartNode)
 #       
 #            self.bodyPartNode.wrtReparentTo(self.enemyModel.exposeJoint(None,"modelRoot",bodyPart))
-        
+        self.updatePath()
         # walk loop
-        self.enemyModel.loop("walk")
+        self.enemyModel.loop("attack")
         
         # attaching to render
         self.enemyModel.reparentTo(self.enemyNP)
+        
+        # loading enemy roar sound
+        zombieRoar = [None,None,None,None]
+        for i in range( len(zombieRoar) ):
+            zombieRoar[i] = self.mainRef.audio3d.loadSfx('../../sounds/zombie_roar_' + str(i+1) + '.mp3')
+        # initialize first zombie roar
+        self.zombieRoarFX = zombieRoar[0] 
+        self.mainRef.audio3d.attachSoundToObject(self.zombieRoarFX, self.enemyNP)
+        self.zombieRoarFX.play()
+        # random zombie roar
+        def roarSort(task):
+            if(self.zombieRoarFX.status() != self.zombieRoarFX.PLAYING):
+                random.seed()
+                value = random.choice(range(3))
+                self.zombieRoarFX = zombieRoar[value]
+                self.mainRef.audio3d.attachSoundToObject(self.zombieRoarFX, self.enemyNP)
+                self.zombieRoarFX.play()
+            return task.again
+        self.mainRef.taskMgr.doMethodLater(2, roarSort, 'roar sort')
         
     def hide(self):
         self.enemyModel.hide()
@@ -108,48 +135,11 @@ class Enemy(Creature):
         self.enemyModel.show()
         self.enemyModel.loop("walk")
         
-    def pursue(self):
-        self.lostTargetTotalTime = 1.0
-
-        self.lostTargetTimer = self.lostTargetTotalTime
-        
-        self.activeState = ""
-
-        def pursueTargetStep(task):
-            if (self.mainRef.player.currentRegion == self.currentRegion):
-                
-                targetDirection = Vec2( self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
-                targetDirectionAngle = Vec2(-sin(radians(self.enemyModel.getH())), 
-                                             cos(radians(self.enemyModel.getH())) ).signedAngleDeg(targetDirection)
-
-                rotationAngle = targetDirectionAngle * self.rotSpeed * globalClock.getDt()
-                self.enemyModel.setH(self.enemyModel.getH() + rotationAngle)
-
-                targetDirection.normalize()
-                playerMoveSpeedVec = targetDirection * self.speed * globalClock.getDt()
-                self.enemyNP.setPos( self.enemyBody.move(Vec3(playerMoveSpeedVec.getX(), playerMoveSpeedVec.getY(), 0) ) )                
-                
-                if (abs(rotationAngle) > 120 * globalClock.getDt()):
-                    self.lostTargetTimer = self.lostTargetTotalTime
-                    self.activeState = self.name + "lt"
-                    taskMgr.add(lostTargetStep, self.activeState)
-                    return task.done
-                 
-            return task.cont
-        
-        def lostTargetStep(task):
-            self.enemyNP.setPos( self.enemyBody.move(Vec3(-sin(radians(self.enemyModel.getH())) * self.speed * globalClock.getDt(),
-                                                           cos(radians(self.enemyModel.getH())) * self.speed * globalClock.getDt(), 0) ) )
-            self.lostTargetTimer -= globalClock.getDt()
+    #                 ======================================================================== 
+    #                 ======================== STATE MACHINE METHODS ==========================
+    def pursueTargetStep(self, task):
+        if (self.mainRef.player.currentRegionID == self.currentRegionID):
             
-            if (self.lostTargetTimer < 0):
-                self.activeState = self.name + "rt"
-                taskMgr.add(recoverTargetStep, self.activeState) 
-                return task.done
-            
-            return task.cont
-            
-        def recoverTargetStep(task):
             targetDirection = Vec2( self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
             targetDirectionAngle = Vec2(-sin(radians(self.enemyModel.getH())), 
                                          cos(radians(self.enemyModel.getH())) ).signedAngleDeg(targetDirection)
@@ -157,17 +147,67 @@ class Enemy(Creature):
             rotationAngle = targetDirectionAngle * self.rotSpeed * globalClock.getDt()
             self.enemyModel.setH(self.enemyModel.getH() + rotationAngle)
 
-            if (abs(targetDirectionAngle) < 5):
-                self.activeState = self.name + "pt"
-                taskMgr.add(pursueTargetStep, self.activeState) 
-                return task.done
+            targetDirection.normalize()
+            playerMoveSpeedVec = targetDirection * self.speed * globalClock.getDt()
+            self.enemyNP.setPos( self.enemyBody.move(Vec3(playerMoveSpeedVec.getX(), playerMoveSpeedVec.getY(), 0) ) )                
             
-            return task.cont
+            if (abs(rotationAngle) > 120 * globalClock.getDt()):
+                self.lostTargetTimer = self.lostTargetTotalTime
+                self.enemyActiveState = self.name + "lt"
+                taskMgr.add(self.lostTargetStep, self.enemyActiveState)
+                return task.done
+             
+        return task.cont
+    
+    def lostTargetStep(self, task):
+        self.enemyNP.setPos( self.enemyBody.move(Vec3(-sin(radians(self.enemyModel.getH())),
+                                                       cos(radians(self.enemyModel.getH())),
+                                                        0) ) * self.speed * globalClock.getDt() )
+        self.lostTargetTimer -= globalClock.getDt()
+        
+        if (self.lostTargetTimer < 0):
+            self.enemyActiveState = self.name + "rt"
+            taskMgr.add(self.recoverTargetStep, self.enemyActiveState) 
+            return task.done
+        
+        return task.cont
+        
+    def recoverTargetStep(self, task):
+        targetDirection = Vec2( self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
+        targetDirectionAngle = Vec2(-sin(radians(self.enemyModel.getH())), 
+                                     cos(radians(self.enemyModel.getH())) ).signedAngleDeg(targetDirection)
+
+        rotationAngle = targetDirectionAngle * self.rotSpeed * globalClock.getDt()
+        self.enemyModel.setH(self.enemyModel.getH() + rotationAngle)
+
+        if (abs(targetDirectionAngle) < 5):
+            self.enemyActiveState = self.name + "pt"
+            taskMgr.add(self.pursueTargetStep, self.enemyActiveState) 
+            return task.done
+        
+        return task.cont
+    
+    def headToPortal(self, task):
+        directionVec = Vec3(self.currentCrossPointGoal.getX() - self.enemyNP.getX(),
+                            self.currentCrossPointGoal.getY() - self.enemyNP.getY(), 0)
+        directionVec.normalize()
+        
+        self.enemyNP.setPos( self.enemyBody.move( directionVec * self.speed * globalClock.getDt() ) )
+        
+        return task.cont    
+    #              ====================== END OF STATE MACHINE METHODS ========================  
+    #              ============================================================================
+        
+        
+    def pursue(self):
+        self.lostTargetTotalTime = 1.0
+
+        self.lostTargetTimer = self.lostTargetTotalTime
                     
-        taskMgr.add(pursueTargetStep, self.name + 'pt')
+        taskMgr.add(self.pursueTargetStep, self.name + 'pt')
         
     def destroy(self):
-        taskMgr.remove( self.activeState )
+        taskMgr.remove( self.enemyActiveState )
         self.enemyModel.cleanup()
         self.enemyBB.removeNode()
         for node in self.bulletNodes.keys():
@@ -193,5 +233,195 @@ class Enemy(Creature):
 #        
 #        self.bulletNodes[limb].applyCentralForce(Vec3(0, 0, -5))
 #        self.mainRef.world.removeRigidBody(self.bulletNodes[limb])
+
+    def updatePath(self):
+        
+        convexRegionsList = self.mainRef.map.convexRegions      
+        self.portalsPathList = []        # this is what we want for enemy's correct pursue path
+        discoveredRegionsList = []     # part of the BFS algorithm
+        visitedRegionsList = [False for item in range( len(convexRegionsList))]
+        regionFatherList = [None for item in range( len(convexRegionsList))]       # this list keeps track of a region's father AND the portalEntrance connecting them
+        
+        # from now, we'll execute a BFS to find each region that enemy will cross to reach player's position
+        discoveredRegionsList.append( convexRegionsList[self.currentRegionID] )
+        visitedRegionsList[self.currentRegionID] = True
+        regionFatherList[self.currentRegionID] = [-1, None]
+        
+        while(discoveredRegionsList):
+            
+            analisedRegion = discoveredRegionsList.pop(0)
+            for portalEntrance in analisedRegion.portalEntrancesList:
+                neighbourRegionID = portalEntrance.connectedRegionID
+                
+                if (not visitedRegionsList[neighbourRegionID]):
+                    regionFatherList[neighbourRegionID] = [analisedRegion.regionID, portalEntrance.portal]
+                    
+                    if (neighbourRegionID == self.mainRef.player.currentRegionID):
+                        discoveredRegionsList = [] # break while statement trick          
+                        break
+                    
+                    visitedRegionsList[neighbourRegionID] = True
+                    discoveredRegionsList.append( convexRegionsList[neighbourRegionID] )
+        
+        # now that we have all regions necessary , we'll just put all portals on the correct order
+        lastRegionFatherID = self.mainRef.player.currentRegionID
+        while (lastRegionFatherID != -1):
+            lastRegionFather = regionFatherList[lastRegionFatherID]
+            lastRegionFatherID = lastRegionFather[0]
+            self.portalsPathList.append(lastRegionFather[1])
+        
+        # putting portals path on the right order for enemy pursuing algorithm    
+        self.portalsPathList.sort(reverse=True)
+        self.portalsPathList.pop()
+        
+#        for portal in portalsPathList:
+#            print portal.connectedRegionsIDs
+
+        self.setNewCourse()
+
+    def checkIfChangedRegion(self, lastRegion=0):
+
+        for portalEntrance in self.mainRef.map.convexRegions[self.currentRegionID].portalEntrancesList:
+            
+            if ( self.intersect( self.oldPosition, self.enemyNP.getPos(), 
+                                 portalEntrance.portal.frontiers[0], portalEntrance.portal.frontiers[1] )
+                                 and portalEntrance.portal.connectedRegionsIDs[0] != lastRegion 
+                                 and portalEntrance.portal.connectedRegionsIDs[1] != lastRegion ):
+                
+                oldRegion = self.currentRegionID
+                self.currentRegionID = portalEntrance.connectedRegionID
+                
+                # Debug
+                print self.name + " region changed: ", oldRegion, ">", self.currentRegionID
+                
+                # erase last item of portalsPathList
+                self.portalsPathList.pop(0)
+                
+                # alert all enemys
+                self.setNewCourse()
+                
+                # check again
+                self.checkIfChangedRegion(oldRegion)
+        
+        self.oldPosition = self.mainRef.player.playerNP.getPos()
+              
+
+    def ccw(self, A,B,C):
+        return (C.getY()-A.getY())*(B.getX()-A.getX()) > (B.getY()-A.getY())*(C.getX()-A.getX())
+    
+    def intersect(self, A,B,C,D):
+        return self.ccw(A,C,D) != self.ccw(B,C,D) and self.ccw(A,B,C) != self.ccw(A,B,D)
+
+
+
+    def setNewCourse(self):
+        
+        # Simply follow the player
+        if (len(self.portalsPathList) == 0):
+            
+            taskMgr.remove( self.enemyActiveState )
+            self.enemyActiveState = self.name + "pt"
+            taskMgr.add(self.pursueTargetStep, self.enemyActiveState)
+
+        
+        # Go to the cross point that makes you closer to your target
+        elif (self.portalsPathList[0].connectedRegionsIDs[0] == self.mainRef.player.currentRegionID or
+              self.portalsPathList[0].connectedRegionsIDs[1] == self.mainRef.player.currentRegionID):
+            
+#            self.setOptimalCrossPoint()
+            
+            taskMgr.remove( self.enemyActiveState )
+            self.enemyActiveState = self.name + "htp"
+            taskMgr.add(self.headToPortal, self.enemyActiveState)
+        
+        
+        # Go to the middle cross point
+        else:
+            
+            self.currentCrossPointGoal = self.portalsPathList[0].middleCrossPoint
+            
+            taskMgr.remove( self.enemyActiveState )
+            self.enemyActiveState = self.name + "htp"
+            taskMgr.add(self.headToPortal, self.enemyActiveState)
+
+
+    def setOptimalCrossPoint(self):
+        
+        deltaPositionVec = self.mainRef.player.playerNP.getPos() - self.enemyNP.getPos()
+        positionPoint = self.enemyNP.getPos()
+        
+        deltaFrontiersVec = self.portalsPathList[0].frontiersVec
+        frontierPoint = self.portalsPathList[0].frontiers[0]
+        
+        if (deltaPositionVec.getX() == 0):
+            tang2 = deltaFrontiersVec.getY() / deltaFrontiersVec.getX()
+            b2 = frontierPoint.getY() - tang2 * frontierPoint.getX()
+            
+            xRes = positionPoint.getX()
+            yRes = tang2 * xRes + b2
+            
+            
+        if (deltaFrontiersVec.getX() == 0):
+            tang1 = deltaPositionVec.getY() / deltaPositionVec.getX()
+            b2 = frontierPoint.getY() - tang2 * frontierPoint.getX()
+            
+            xRes = frontierPoint.getX()
+            yRes = tang1 * xRes + b1
+            
+        
+        else:
+            tang1 = deltaPositionVec.getY() / deltaPositionVec.getX()
+            tang2 = deltaFrontiersVec.getY() / deltaFrontiersVec.getX()
+            
+            b1 = positionPoint.getY() - tang1 * positionPoint.getX()
+            b2 = frontierPoint.getY() - tang2 * frontierPoint.getX()
+            
+            xRes = (b1 - b2) / (tang1 - tang2)
+            yRes = tang1 * xRes + b1
+            
+            
+        if (deltaFrontiersVec.getX() == 0):
+            if ( ( yRes > self.portalsPathList[0].frontiers[0].getY() and yRes < self.portalsPathList[0].frontiers[1].getY() ) or
+                 ( yRes < self.portalsPathList[0].frontiers[0].getY() and yRes > self.portalsPathList[0].frontiers[1].getY() ) ) :
+                self.currentCrossPointGoal = Vec2(xRes, yRes)
+                
+            elif (yRes > self.portalsPathList[0].frontiers[0].getY() and
+                  yRes > self.portalsPathList[0].frontiers[1].getY() ):
+                if ( self.portalsPathList[0].frontiers[0].getY() > 
+                     self.portalsPathList[0].frontiers[1].getY()):
+                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[0]
+                else:
+                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[1]
+        
+            else:
+                if ( self.portalsPathList[0].frontiers[0].getY() < 
+                     self.portalsPathList[0].frontiers[1].getY()):
+                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[0]
+                else:
+                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[1]
+         
+         
+        else:
+            if ( ( xRes > self.portalsPathList[0].frontiers[0].getX() and xRes < self.portalsPathList[0].frontiers[1].getX() ) or
+                 ( xRes < self.portalsPathList[0].frontiers[0].getX() and xRes > self.portalsPathList[0].frontiers[1].getX() ) ) :
+                self.currentCrossPointGoal = Vec2(xRes, yRes)
+                
+            elif (xRes > self.portalsPathList[0].frontiers[0].getX() and
+                  xRes > self.portalsPathList[0].frontiers[1].getX()):
+                if ( self.portalsPathList[0].frontiers[0].getX() > 
+                     self.portalsPathList[0].frontiers[1].getX()):
+                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[0]
+                else:
+                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[1]
+        
+            else:
+                if ( self.portalsPathList[0].frontiers[0].getX() < 
+                     self.portalsPathList[0].frontiers[1].getX()):
+                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[0]
+                else:
+                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[1]
+
+
+
 
         

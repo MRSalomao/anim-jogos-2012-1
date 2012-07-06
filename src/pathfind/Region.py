@@ -5,9 +5,13 @@ class Region(object):
         self.regionID = regionID
         self.vertices = []
         
-        self.neighbourIDs = [] # OBS: self.neighbourIDs[i] corresponds to self.portalsList[i]
-        self.portalsList = []
+        self.portalEntrancesList = []
         
     def chagedRegion(self, currentRegion):
         
         return 0
+    
+    
+    
+    
+    
