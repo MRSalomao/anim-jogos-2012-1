@@ -36,7 +36,7 @@ class Player(Creature):
         # dummy nodepath for our player; we will attach everything to it
         
         # player bullet node - NOTE: for detecting collision with attacks, only
-        playerNode = BulletRigidBodyNode() 
+        playerNode = BulletRigidBodyNode('Player_NP') 
         playerNode.addShape( BulletCapsuleShape(0.3, 1, ZUp) ) # adicionar node no lugar da string
         self.mainRef.world.attachRigidBody(playerNode)
         
@@ -50,6 +50,7 @@ class Player(Creature):
         self.playerHeadNP = NodePath("empty") # This node is intended to be a placeholder for the camera (maintainability only)
         
         self.playerHeadNP.reparentTo( self.playerNP )
+        self.playerHeadNP.setPos(0, 0, 1.35)
                 
 #        self.mainRef.camera.setPos(0, -4, 0)
         self.mainRef.camera.reparentTo( self.playerHeadNP )
@@ -59,7 +60,7 @@ class Player(Creature):
         self.playerNP.setPos(0,0,1.0)
         
         # setting player's character body
-        self.playerBody = CharacterBody(self.mainRef, self.playerNP.getPos(), .4, 1.0)
+        self.playerBody = CharacterBody(self.mainRef, self.playerNP.getPos(), 0.38, 0.5)
         self.playerBody.charBodyNP.reparentTo(self.playerNP) 
         
         # setting our movementHandler
@@ -97,11 +98,11 @@ class Player(Creature):
                        cos(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
                        sin(radians(self.playerHeadNP.getP())) )
 
-        result = self.mainRef.world.rayTestClosest(self.playerNP.getPos(), self.playerNP.getPos() + (pTo * 100.0), mask = BitMask32.allOn() )
+        result = self.mainRef.world.rayTestClosest(self.playerHeadNP.getPos(base.render), self.playerHeadNP.getPos(base.render) + (pTo * 100.0), mask = BitMask32.allOn() )
 
         # Shoot particles
         self.shootParticles(result)
-        
+
         if (result.hasHit()):
             self.mainRef.enemyManager.handleShot(result)
         # weapon anim
@@ -112,12 +113,10 @@ class Player(Creature):
         glockShot.play()
         
     def onContactAdded(self, node1, node2):
-        
         # decrease player's life when zombie contact happen
         if ( ( ('arm_ll' in node1.getName() ) or (node1.getName() == ('Player_NP') ) ) and 
              ( ('arm_ll' in node2.getName() ) or (node2.getName() == ('Player_NP') ) ) and
              ( self.canLoseHP ) ):
-            
             # decrease player hp
             oldHPValue = int( self.mainRef.playerHUD.guiHp.node().getText() )
             if (oldHPValue > 0):

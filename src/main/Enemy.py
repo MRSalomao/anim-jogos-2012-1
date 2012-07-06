@@ -20,6 +20,9 @@ class Enemy(Creature):
         # unique enemy name
         self.name = name
         
+        # If enemy is alive
+        self.alive = True
+        
         # enemy's pursue speed P-units/s
         self.speed = 1.2
         
@@ -48,13 +51,16 @@ class Enemy(Creature):
         self.lostTargetTimer = self.lostTargetTotalTime
         
         # load our zombie
-        self.enemyModel = Actor("../../models/model_zombie/zombie")
+        self.enemyModel = Actor("../../models/model_zombie/zombie",{
+                                'walk':'../../models/model_zombie/zombie-walk.egg',
+                                'attack':'../../models/model_zombie/zombie-attack.egg',
+})
         # ****SCALE****
         self.enemyModel.setScale(0.55)
         # ****SCALE****
         
         #enemy's character controller
-        self.enemyBody = CharacterBody(self.mainRef, self.enemyNP.getPos(), 0.4, 1 )
+        self.enemyBody = CharacterBody(self.mainRef, self.enemyNP.getPos(), 0.38, 0.5 )
         self.enemyBody.charBodyNP.reparentTo(self.enemyNP)
         
         # load the zombie's bounding boxes
@@ -115,10 +121,12 @@ class Enemy(Creature):
         taskMgr.add(self.checkIfChangedRegion, self.checkIfChangedRegionName)
         
         # walk loop
-        self.enemyModel.loop("attack")
+#        self.enemyModel.loop("walk")
+        self.enemyModel.loop("walk")
         
         # attaching to render
         self.enemyModel.reparentTo(self.enemyNP)
+        self.enemyModel.setPos(0,0,-0.51)
         
         # loading enemy roar sound
         zombieRoar = [None,None,None,None]
@@ -137,7 +145,7 @@ class Enemy(Creature):
                 self.mainRef.audio3d.attachSoundToObject(self.zombieRoarFX, self.enemyNP)
                 self.zombieRoarFX.play()
             return task.again
-        self.mainRef.taskMgr.doMethodLater(2, roarSort, 'roar sort')
+        self.mainRef.taskMgr.doMethodLater(2, roarSort,self.name+'roar sort')
         
     def hide(self):
         self.enemyModel.hide()
@@ -240,12 +248,16 @@ class Enemy(Creature):
     #              ============================================================================
         
     def destroy(self):
-        taskMgr.remove( self.enemyActiveState )
-        self.enemyModel.cleanup()
-        self.enemyBB.removeNode()
+        self.alive = False
+        taskMgr.remove(self.name+'roar sort') # removing sound
         for node in self.bulletNodes.keys():
             self.mainRef.world.removeRigidBody(self.bulletNodes[node])
-            
+            self.partNodes[node].removeNode()
+        taskMgr.remove( self.enemyActiveState ) # removing state machine task 
+        self.enemyModel.cleanup()
+        self.enemyBB.removeNode()
+        self.enemyBody.destroy()
+
     def detachLimb(self,limb):
         # Detaches a limb from the enemy and makes it drop on the floor
         print "[Detach] Detach %s" % limb
@@ -307,10 +319,10 @@ class Enemy(Creature):
         self.portalsPathList.pop()  
         self.portalsPathList.reverse()
         
-        
-        print "lista de portais:"
-        for portal in self.portalsPathList:
-            print portal.connectedRegionsIDs
+        # Debug
+#        print "lista de portais:"
+#        for portal in self.portalsPathList:
+#            print portal.connectedRegionsIDs
 
         self.setNewCourse()
 
@@ -328,7 +340,7 @@ class Enemy(Creature):
 
                 
                 # Debug
-                print self.name + " region changed: ", oldRegion, ">", self.currentRegionID
+#                print self.name + " region changed: ", oldRegion, ">", self.currentRegionID
                 
                 # erase last item of portalsPathList (if it isn't empty)
                 if (len(self.portalsPathList) != 0):

@@ -11,11 +11,18 @@ class MovementHandler(object):
         self.mainRef = mainReference
         
         self.movementTaskList = []
+        
+        self.playerIsJumping = False
+        self.jumpSpeed = 0.0
+        self.jumpAccel = 30.0
+        
+        self.walkSpeed = 0.12
+        self.runSpeed = 0.20
 
         # 'K' stands for constants
-        self.cameraRotationSpeedH_K = 0.04
-        self.cameraRotationSpeedP_K = 0.03
-        self.cameraMovementSpeed_K = 0.1
+        self.playerRotationSpeedH_K = 0.04
+        self.playerRotationSpeedP_K = 0.03
+        self.playerMovementSpeed_K = self.walkSpeed
         
         # Rate at which the camera rotation/movement fades away
         self.rotationDamping_K = 0.55
@@ -59,7 +66,32 @@ class MovementHandler(object):
         self.movementTaskList.append( self.mainRef.accept("a-up", self.setMoveLeft, [False]) )
         self.movementTaskList.append( self.mainRef.accept("d", self.setMoveRight, [True]) )
         self.movementTaskList.append( self.mainRef.accept("d-up", self.setMoveRight, [False]) )
+        self.movementTaskList.append( self.mainRef.accept("shift", self.setSprint, [True]) )
+        self.movementTaskList.append( self.mainRef.accept("shift-up", self.setSprint, [False]) ) 
+        self.movementTaskList.append( self.mainRef.accept("space", self.jump, [True]) )
         
+        
+    def setSprint(self,value):
+        if (value): 
+            self.playerMovementSpeed_K = self.runSpeed
+        else:
+            self.playerMovementSpeed_K = self.walkSpeed
+            
+    def jump(self,value):  
+        if (self.playerIsJumping == False):
+            self.playerIsJumping = True
+            self.jumpSpeed = 0.0
+            taskMgr.add(self.jumpTask, "jump")
+    
+    def jumpTask(self, task):
+        if (task.time < 0.7 ):
+            self.jumpSpeed += self.jumpAccel * globalClock.getDt()
+            self.mainRef.player.playerNP.setPos( self.mainRef.player.playerBody.move(Vec3(0,0,self.jumpSpeed)) )
+            task.cont
+            
+        self.playerIsJumping = False
+        task.done
+            
         
     def unregisterFPSMovementInput(self):
         while( not(self.movementTaskList.empty()) ):
@@ -104,7 +136,7 @@ class MovementHandler(object):
                     self.playerMoveAccelerationVec.addY(  cos(self.cameraH * MovementHandler.degreeInRad) )
       
                 self.playerMoveAccelerationVec.normalize()
-                self.playerMoveAccelerationVec *= self.cameraMovementSpeed_K
+                self.playerMoveAccelerationVec *= self.playerMovementSpeed_K
                 
                 self.playerMoveSpeedVec += self.playerMoveAccelerationVec
                 self.playerMoveSpeedVec *= self.movementDamping_K
@@ -127,8 +159,8 @@ class MovementHandler(object):
                 self.deltaMousePosition.setX( winSizeX/2 - ( self.currentMousePosition.getX() + 1) / 2 * winSizeX)   
                 self.deltaMousePosition.setY( winSizeY/2 - (-self.currentMousePosition.getY() + 1) / 2 * winSizeY)
                   
-                self.cameraSpeedH += self.deltaMousePosition.getX() * self.cameraRotationSpeedH_K
-                self.cameraSpeedP += self.deltaMousePosition.getY() * self.cameraRotationSpeedP_K
+                self.cameraSpeedH += self.deltaMousePosition.getX() * self.playerRotationSpeedH_K
+                self.cameraSpeedP += self.deltaMousePosition.getY() * self.playerRotationSpeedP_K
                 
                 self.cameraP += self.cameraSpeedP
                 self.cameraH += self.cameraSpeedH

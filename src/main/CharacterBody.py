@@ -14,11 +14,11 @@ class CharacterBody(object):
         self.charBodySphereShape = BulletSphereShape(bodyRadius)
         self.charBodySphereShapeMinor = BulletSphereShape(bodyRadius - 0.1)
         
-        collisionNode = BulletRigidBodyNode()
-        collisionNode.addShape(self.charBodySphereShape)
-        self.mainRef.world.attachRigidBody(collisionNode)
+        self.collisionNode = BulletRigidBodyNode()
+        self.collisionNode.addShape(self.charBodySphereShape)
+        self.mainRef.world.attachRigidBody(self.collisionNode)
         
-        self.charBodyNP = self.mainRef.render.attachNewNode(collisionNode)
+        self.charBodyNP = self.mainRef.render.attachNewNode(self.collisionNode)
         # this collision mask will only avoid CharacterBody collision on itself
         self.charBodyNP.setCollideMask(BitMask32(0x7FFFFFFF))
         
@@ -77,7 +77,12 @@ class CharacterBody(object):
             self.position = self.position + self.fallingSpeed
         
         
-        
+    def destroy(self):
+        "Destructor"
+        # Remove bullet node
+        self.mainRef.world.removeRigidBody(self.collisionNode)
+        self.charBodyNP.removeNode()
+        pass
 
         
         
