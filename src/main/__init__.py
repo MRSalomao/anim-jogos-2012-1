@@ -9,6 +9,10 @@ from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
 from pathfind import *
 
+from panda3d.core import loadPrcFileData
+
+loadPrcFileData('', 'fullscreen #t')
+
 
 import sys
 from PlayerHUD import *
