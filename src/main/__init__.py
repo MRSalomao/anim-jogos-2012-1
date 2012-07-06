@@ -55,6 +55,8 @@ class Main(ShowBase):
         #Dictionary containing all images used
         self.images = {}
         
+        # Flag for game over
+        self.gameIsOver = 0
         # Image Scale used
         self.imageScale = 1.4
 
@@ -68,11 +70,14 @@ class Main(ShowBase):
         #Validate initial splash screen
         self.validateSplash = True
 
+        #Validate Game Over
+        self.validateEndGame = True
+
         #Define the game as a Finite State Machine
         # 'splash-screen' - for splash screen
         # 'main-menu' - for main menu
         # 'main-stage' - for the main stage
-        self.state = 'splash-screen'
+        self.state = 'main-stage'
 
         ###################################################### SPLASH SCREEN ##################################################
 
@@ -83,6 +88,8 @@ class Main(ShowBase):
         taskMgr.add(self.mainStage, 'main-stage')
 
         taskMgr.add(self.mainMenu, 'main-menu')
+        
+        taskMgr.add(self.endGame, 'end-game')
         
     def splashScreen(self,task):
         "Defines the splash screen state"
@@ -208,7 +215,7 @@ class Main(ShowBase):
 
         #Set up time limit message and score
         self.score = 0 #points
-        self.time_limit = 300 #in seconds
+        self.time_limit = 10 #in seconds
         time_score_message = "Remaining Time = %.1f \nScore: %i" % (self.time_limit,self.score)
         self.time_score_message = OnscreenText(text = time_score_message, pos = (-1.33, 0.94), scale = 0.07, bg = (1, 1, 1, 0.7), mayChange=1,align=TextNode.ALeft)
 
@@ -360,6 +367,82 @@ class Main(ShowBase):
         self.time_score_message.setText("Remaining Time = %.1f \nScore: %i" % (self.time_limit,self.score))
         return task.again
     
+    
+    def endGame(self,task):
+        "Handles the game over state"
+
+        if self.gameIsOver:
+            if (self.validateEndGame):
+                #First time running, do all stuff
+
+                #Define images to make transition
+                self.images["black_screen"] = OnscreenImage('../../pictures/end_screen.png',color=(0,0,0,1),scale=(self.imageScale,1,1))
+                self.images["end_screen"] = OnscreenImage('../../pictures/end_screen.png',color=(1,1,1,0),scale=(self.imageScale,1,1))
+                #Set transparency attribute
+                self.images["end_screen"].setTransparency(TransparencyAttrib.MAlpha)
+
+                # Destroy zombies
+                for zombie in self.enemyManager.enemys:
+                    if zombie.alive:
+                        zombie.destroy()
+
+                #Unregister Callbacks
+                #taskMgr.remove('time-limit-count')
+                #taskMgr.remove('character-movetask')
+                #taskMgr.remove('loop-coins')
+                #taskMgr.remove('end-sign')
+                #taskMgr.remove('game-control')
+                #taskMgr.remove('troll-time-count')
+
+                #Unload Models
+                #self.mapCol.removeNode()
+                #self.node.removeNode()
+                #self.char.delete()
+
+                #Load Victory/Defeat sounds
+                #victory_sound = self.loader.loadSfx("./music/music_zelda_victory.ogg")
+                #defeat_sound = self.loader.loadSfx("./music/trombone_fail_sound.ogg")
+
+                #Choose proper music
+                chosen_music = 0
+                #if self.gameIsOver == 1:
+                #    chosen_sound = victory_sound
+                #else:
+                #    chosen_sound = defeat_sound
+
+                #Stop bgm
+                #self.bg_music.stop()
+
+
+                #Define lerp function for transition
+                end_in = LerpFunc(        lambda x: self.images["end_screen"].setColor(1,1,1,x),
+                                    duration = 5.0,
+                                    toData = 1,
+                                    fromData = 0,
+                                    blendType = 'easeIn'
+                                    )
+
+                end_out = LerpFunc(        lambda x: self.images["end_screen"].setColor(1,1,1,x),
+                                    duration = 3.0,
+                                    toData = 0,
+                                    fromData = 1,
+                                    blendType = 'easeIn'
+                                    )
+
+                self.end_seq = Sequence(end_in,end_out)
+                self.end_seq.start()
+                self.validateEndGame = False
+
+            #Check if transition ended
+            if(self.end_seq.isPlaying()):
+                return task.cont
+
+
+            #All finished, terminate
+            sys.exit(1)
+
+        else:
+            return task.cont
 
 main = Main()
 # Starting mainLoop
