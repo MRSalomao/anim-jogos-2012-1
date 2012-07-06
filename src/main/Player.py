@@ -68,23 +68,6 @@ class Player(Creature):
         
         # attach default weapon
         self.activeWeapon = Glock(self.mainRef.camera)
-
-        def shootBullet():
-            pTo = Vec3(-sin(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
-                       cos(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
-                       sin(radians(self.playerHeadNP.getP())) )
-
-            result = self.mainRef.world.rayTestClosest(self.playerNP.getPos(), self.playerNP.getPos() + (pTo * 100.0), mask = BitMask32.allOn() )
-            if (result.hasHit()):
-                self.mainRef.enemyManager.handleShot(result)
-                
-            # weapon anim
-            self.activeWeapon.shootAnim()
-            
-            # playing shoot sound
-            glockShot = self.mainRef.loadSfx("../../sounds/glock_single_shot.mp3")
-            glockShot.setVolume(0.2)
-            glockShot.play()
             
         # adding the shoot event
         self.mainRef.accept("mouse1", self.shootBullet)
@@ -110,26 +93,23 @@ class Player(Creature):
 
 
     def shootBullet(self):
-        # Get from/to points from mouse click
-        pMouse = base.mouseWatcherNode.getMouse()
-        pFrom = Point3()
-        pTo = Point3()
-        base.camLens.extrude(pMouse, pFrom, pTo)
-        
-        pFrom = render.getRelativePoint(base.cam, pFrom)
-        pTo = render.getRelativePoint(base.cam, pTo)
+        pTo = Vec3(-sin(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
+                       cos(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
+                       sin(radians(self.playerHeadNP.getP())) )
 
-        direction = pTo - pFrom
-        direction.normalize()
-        result = self.mainRef.world.rayTestClosest(pFrom, pFrom+direction*1000, mask = BitMask32.allOn() )
+        result = self.mainRef.world.rayTestClosest(self.playerNP.getPos(), self.playerNP.getPos() + (pTo * 100.0), mask = BitMask32.allOn() )
 
         # Shoot particles
         self.shootParticles(result)
-
+        
         if (result.hasHit()):
             self.mainRef.enemyManager.handleShot(result)
         # weapon anim
         self.activeWeapon.shootAnim()
+        # playing shoot sound
+        glockShot = self.mainRef.loadSfx("../../sounds/glock_single_shot.mp3")
+        glockShot.setVolume(0.2)
+        glockShot.play()
         
     def onContactAdded(self, node1, node2):
         
