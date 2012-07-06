@@ -12,7 +12,6 @@ from math import *
 from CharacterBody import *
 from direct.particles.ParticleEffect import ParticleEffect
 
->>>>>>> .r99
 from Glock import *
 from Creature import *
 from PlayerMovementHandler import *
@@ -69,16 +68,12 @@ class Player(Creature):
         
         # attach default weapon
         self.activeWeapon = Glock(self.mainRef.camera)
-<<<<<<< .mine
 
         def shootBullet():
             pTo = Vec3(-sin(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
                        cos(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
                        sin(radians(self.playerHeadNP.getP())) )
-=======
->>>>>>> .r99
-            
-<<<<<<< .mine
+
             result = self.mainRef.world.rayTestClosest(self.playerNP.getPos(), self.playerNP.getPos() + (pTo * 100.0), mask = BitMask32.allOn() )
             if (result.hasHit()):
                 self.mainRef.enemyManager.handleShot(result)
@@ -86,8 +81,6 @@ class Player(Creature):
             # weapon anim
             self.activeWeapon.shootAnim()
             
-=======
->>>>>>> .r99
             # playing shoot sound
             glockShot = self.mainRef.loadSfx("../../sounds/glock_single_shot.mp3")
             glockShot.setVolume(0.2)
