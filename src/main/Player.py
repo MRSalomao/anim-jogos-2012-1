@@ -5,17 +5,23 @@ from panda3d.bullet import BulletSphereShape
 from panda3d.bullet import BulletCapsuleShape
 from panda3d.bullet import BulletCylinderShape
 from panda3d.bullet import ZUp
+from direct.showbase import Audio3DManager
+
+from math import *
+
 from CharacterBody import *
 from direct.particles.ParticleEffect import ParticleEffect
 
+>>>>>>> .r99
 from Glock import *
 from Creature import *
-from MovementHandler import *
+from PlayerMovementHandler import *
+
 
 class Player(Creature):
     
     def __init__(self,mainReference):
-        self.mainRef = mainReference
+        
         super(Player, self).__init__(mainReference)
         
         # setting player HP
@@ -26,14 +32,12 @@ class Player(Creature):
         self.mainRef.camLens.setNear(0.02)
         self.mainRef.camLens.setFar(80.0)
         
-        self.currentRegion = 1
+        self.currentRegionID = 1
 
-        self.playerBody = CharacterBody(self.mainRef, Point3(0, 2, 1.7), .4, 1.7)
-        
         # dummy nodepath for our player; we will attach everything to it
         
-        # player bullet node
-        playerNode = BulletRigidBodyNode('Player_NP') 
+        # player bullet node - NOTE: for detecting collision with attacks, only
+        playerNode = BulletRigidBodyNode() 
         playerNode.addShape( BulletCapsuleShape(0.3, 1, ZUp) ) # adicionar node no lugar da string
         self.mainRef.world.attachRigidBody(playerNode)
         
@@ -43,12 +47,21 @@ class Player(Creature):
         # notify collision contacts
         self.playerNP.node().notifyCollisions(True)
         
-        self.mainRef.camera.reparentTo( self.playerNP )
-        # eyes height
-        self.mainRef.camera.setZ(0.2)
+        
+        self.playerHeadNP = NodePath("empty") # This node is intended to be a placeholder for the camera (maintainability only)
+        
+        self.playerHeadNP.reparentTo( self.playerNP )
+                
+#        self.mainRef.camera.setPos(0, -4, 0)
+        self.mainRef.camera.reparentTo( self.playerHeadNP )
+        
         
         # NodePath position
         self.playerNP.setPos(0,0,1.0)
+        
+        # setting player's character body
+        self.playerBody = CharacterBody(self.mainRef, self.playerNP.getPos(), .4, 1.0)
+        self.playerBody.charBodyNP.reparentTo(self.playerNP) 
         
         # setting our movementHandler
         self.movementHandler = MovementHandler(self.mainRef)
@@ -56,6 +69,29 @@ class Player(Creature):
         
         # attach default weapon
         self.activeWeapon = Glock(self.mainRef.camera)
+<<<<<<< .mine
+
+        def shootBullet():
+            pTo = Vec3(-sin(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
+                       cos(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
+                       sin(radians(self.playerHeadNP.getP())) )
+=======
+>>>>>>> .r99
+            
+<<<<<<< .mine
+            result = self.mainRef.world.rayTestClosest(self.playerNP.getPos(), self.playerNP.getPos() + (pTo * 100.0), mask = BitMask32.allOn() )
+            if (result.hasHit()):
+                self.mainRef.enemyManager.handleShot(result)
+                
+            # weapon anim
+            self.activeWeapon.shootAnim()
+            
+=======
+>>>>>>> .r99
+            # playing shoot sound
+            glockShot = self.mainRef.loadSfx("../../sounds/glock_single_shot.mp3")
+            glockShot.setVolume(0.2)
+            glockShot.play()
             
         # adding the shoot event
         self.mainRef.accept("mouse1", self.shootBullet)
