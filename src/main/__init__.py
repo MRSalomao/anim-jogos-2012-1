@@ -67,7 +67,10 @@ class Main(ShowBase):
         # initializing player
         self.player = Player(self)
         # allow player collision contact handling
-        self.accept('bullet-contact-added', self.player.onContactAdded)      
+        self.accept('bullet-contact-added', self.player.onContactAdded)
+        # setting positional audio reference to player camera
+        # sounds close to camera will play louder than far ones 
+        self.audio3d = Audio3DManager.Audio3DManager(self.sfxManagerList[0], self.camera)     
         
         # initializing map
         self.map = Map(self)
@@ -78,12 +81,34 @@ class Main(ShowBase):
         # initializing HUD
         self.playerHUD = PlayerHUD(self)
         
-        # updating Bullet physics engine
+        # loading theme sounds
+        themeSoundShort = self.loadSfx("../../sounds/h_block_themesound_1.mp3")
+        themeSoundShort.setVolume(0.2)
+        themeSoundLong = self.loadSfx("../../sounds/h_block_themesound_2.mp3")
+        themeSoundLong.setVolume(0.2)   
+        # boolean responsible for theme sound switch
+        self.switchSound = False
+        # starting theme
+        themeSoundLong.play()
+        
         def update(task):
+            # updating Bullet physics engine
             dt = globalClock.getDt()
             self.world.doPhysics(dt, 4, 1./120.)
+            
+            # theme sound check and play
+            self.switchSound
+            if (themeSoundLong.status() != themeSoundLong.PLAYING and not self.switchSound):
+                themeSoundShort.play()
+                self.switchSound = True
+            elif (themeSoundShort.status() != themeSoundLong.PLAYING and self.switchSound):
+                themeSoundLong.play()
+                self.switchSound = False
+                
             return task.cont
         taskMgr.add(update, 'update')
+        
+        
 
 main = Main()
 # Starting mainLoop
