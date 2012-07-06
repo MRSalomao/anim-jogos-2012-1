@@ -5,6 +5,8 @@ from panda3d.bullet import BulletWorld
 from panda3d.bullet import BulletRigidBodyNode
 from panda3d.bullet import BulletConvexHullShape
 from panda3d.bullet import BulletDebugNode
+from direct.gui.OnscreenText import OnscreenText
+from direct.gui.OnscreenImage import OnscreenImage
 from pathfind import *
 
 
@@ -32,12 +34,189 @@ class Main(ShowBase):
         # esc kills our game
         self.accept("escape",sys.exit)
         
+        #- Setup some default values for jump position and a key map
+        self.jump = 0
+        self.keyM = {
+                    'left': [False, False],
+                    'right':[False, False],
+                    'down': [False, False],
+                    'up': [False, False],
+                    'jump': [False, False],
+                    'inst': [False,False],
+                    'about': [False,False],
+                    'quit': [False,False],
+                    'start': [False,False]
+                    }
+        
+        #Dictionary containing all images used
+        self.images = {}
+        
+        # Image Scale used
+        self.imageScale = 1.4
+
         # activating fps
         base.setFrameRateMeter(True)
 
         # Enable particles
         base.enableParticles()
+        
+        # Game main FSM
+        #Validate initial splash screen
+        self.validateSplash = True
 
+        #Define the game as a Finite State Machine
+        # 'splash-screen' - for splash screen
+        # 'main-menu' - for main menu
+        # 'main-stage' - for the main stage
+        self.state = 'splash-screen'
+
+        ###################################################### SPLASH SCREEN ##################################################
+
+        #Start splash screen
+        taskMgr.add(self.splashScreen, 'splash-screen')
+        
+        #Start main stage loop
+        taskMgr.add(self.mainStage, 'main-stage')
+
+        taskMgr.add(self.mainMenu, 'main-menu')
+        
+    def splashScreen(self,task):
+        "Defines the splash screen state"
+
+        if (self.state.lower() != 'splash-screen'):
+            return task.cont
+
+        if (self.validateSplash): #Indicate first time run
+            #Load required images
+            self.images = {"black_screen":OnscreenImage('../../pictures/intro.jpg',color=(0,0,0,1),scale=(self.imageScale,1,1)),
+                    "intro_image": OnscreenImage('../..//pictures/intro.jpg',color=(1,1,1,0),scale=(self.imageScale,1,1)),
+                    "sponsor_image":OnscreenImage('../..//pictures/sponsors.png',color=(1,1,1,0),scale=(self.imageScale,1,1))}
+
+            #Set transparency attribute
+            self.images["intro_image"].setTransparency(TransparencyAttrib.MAlpha)
+            self.images["sponsor_image"].setTransparency(TransparencyAttrib.MAlpha)
+
+
+            #Define fade intervals
+            intro_in = LerpFunc(        lambda x: self.images["intro_image"].setColor(1,1,1,x),
+                                duration = 3.0,
+                                toData = 1,
+                                fromData = 0,
+                                blendType = 'easeIn'
+                                )
+            intro_out = LerpFunc(        lambda x: self.images["intro_image"].setColor(1,1,1,x),
+                                duration = 3.0,
+                                toData = 0,
+                                fromData = 1,
+                                blendType = 'easeIn'
+                                )
+            sponsor_in = LerpFunc(        lambda x: self.images["sponsor_image"].setColor(1,1,1,x),
+                                duration = 2.0,
+                                toData = 1,
+                                fromData = 0,
+                                blendType = 'easeIn'
+                                )
+            sponsor_out = LerpFunc(        lambda x: self.images["sponsor_image"].setColor(1,1,1,x),
+                                duration = 2.0,
+                                toData = 0,
+                                fromData = 1,
+                                blendType = 'easeIn'
+                                )
+            #Play sequence
+            self.splash_seq = Sequence(intro_in,intro_out,sponsor_in,sponsor_out)
+            self.splash_seq.start()
+
+            self.validateSplash = False #dont run this part of the splash again    
+        
+        #Wait splash screen
+        if not self.splash_seq.isPlaying():
+            #Allow next state
+            self.state = 'main-menu'
+
+            #Clean garbage
+            for image in self.images.keys():
+                self.images[image].destroy()
+        else:
+            #Iterate again
+            return task.cont
+        
+    def mainMenu(self,task):
+        "Defines the main menu state"
+
+        if (self.state.lower() != 'main-menu'):
+            return task.cont
+
+        # Load Music
+        self.bg_music = self.loader.loadSfx("../../sounds/h_block_themesound_2.mp3")
+        self.bg_music.setLoop(True)
+        self.bg_music.play()
+
+        # Show picture
+        self.images["main_menu"] = OnscreenImage('../../pictures/menu.jpg',scale=(self.imageScale,1,1))
+
+        #Define messages to be displayed
+        inst_msg = "- Instructions -\n\nUse the arrow keys to move\nUse the space bar to jump\n    Press Space + Down_Arrow while on a step to fall\nSome steps are suspicious, BE CAREFUL!\n\nKill as many zombies as possible!!\n\n Hope we can have maximum degree at this game Project!\n\nAnd of course HAVE FUN! ;D\n"
+
+        about_msg = "- About -\n\nH-Block v 0.0.0.0.1\nProgrammed by: Guilherme S. - Marcello R. - Victor T."
+        
+        #title_msg = "H-Block"
+
+        options_msg = "[z]: Instructions      [x]: About      [enter]: Start      [escape]:Quit"     
+
+        self.inst_txt = OnscreenText(text = inst_msg, pos = (0, 0.3), scale = 0.07, bg = (1, 1, 1, 0.7),align = TextNode.ACenter)
+        self.about_txt = OnscreenText(text = about_msg, pos = (0, 0), scale = 0.07, bg = (1, 1, 1, 0.7),align = TextNode.ACenter)
+
+        #self.title_txt = OnscreenText(text = title_msg, pos = (0, 0.7), scale = 0.07, bg = (1, 1, 1, 0.8),align = TextNode.ACenter)
+        #self.title_txt.setScale(0.2)
+        self.options_txt = OnscreenText(text = options_msg, pos = (0, -0.7), scale = 0.07, bg = (1, 1, 1, 0.3),align = TextNode.ACenter)
+
+        self.inst_txt.hide()
+        self.about_txt.hide()
+
+        #Bind keys to key-map
+        self.accept('x', self.setKey, ['inst', True])
+        self.accept('x-up', self.setKey, ['inst', False])
+        #self.accept('escape', self.setKey, ['quit', True])
+        #self.accept('escape-up', self.setKey, ['quit', False])
+        self.accept('z', self.setKey, ['about', True])
+        self.accept('z-up', self.setKey, ['about', False])
+        self.accept('enter', self.setKey, ['start', True])
+        self.accept('enter-up', self.setKey, ['start', False])
+        #Add funcion to handle the key input
+        self.taskMgr.add(self.mainMenuKeys, "mainMenuKeysTask")
+        
+        
+
+    def mainStage(self,task):
+        "Defines the main stage state of the game"
+
+        if (self.state.lower() != 'main-stage'):
+            return task.cont
+        
+        ###################################################### VARIABLES ######################################################
+
+        #- Make a help message and hide it when the user presses the "h" key
+        help_msg = "- H-Bloc -\nUse the W-A-S-D keys to move\nUse the space bar to jump\nPress shift to run faster!\nThere are Marcello-Zombies-Clones around, BE CAREFUL!\n\nPress 'h' to hide/show this help message\nGood luck!\n"
+
+        #- Make dialog showing options of keys to press
+
+        options_msg = "[esc]: Quit\n[h]: Help"
+
+        #Set up time limit message and score
+        self.score = 0 #points
+        self.time_limit = 300 #in seconds
+        time_score_message = "Remaining Time = %.1f \nScore: %i" % (self.time_limit,self.score)
+        self.time_score_message = OnscreenText(text = time_score_message, pos = (-1.33, 0.94), scale = 0.07, bg = (1, 1, 1, 0.7), mayChange=1,align=TextNode.ALeft)
+
+        #Set up help message
+        self.helpMessage = OnscreenText(text = help_msg, pos = (-1.1, -0.1), scale = 0.07, bg = (1, 1, 1, 0.7),align=TextNode.ALeft)
+        self.helpMessage.hide()
+        self.accept('h', self.hideHelp)
+
+        #set up options message
+        self.optionsMessage = OnscreenText(text = options_msg, pos = (-1.325, 0.790), scale = 0.07, bg = (1, 1, 1, 0.7),align=TextNode.ALeft)
+        
+        ######################### CODE ############################
         # Bullet debug purposes
         debugNode = BulletDebugNode('Debug')
         debugNode.showWireframe(True)
@@ -46,24 +225,14 @@ class Main(ShowBase):
         debugNode.showNormals(False)
         debugNP = render.attachNewNode(debugNode)
 
-        
         # initializing Bullet physics
         self.world = BulletWorld()
         self.world.setGravity(Vec3(0, 0, -9.81))
         self.world.setDebugNode(debugNP.node())
-
-        # on/off debug mode
-        def toggleDebug():
-            if debugNP.isHidden():
-                debugNP.show()
-            else:
-                debugNP.hide()
                 
         # activate bullet contact notification
         loadPrcFileData('', 'bullet-enable-contact-events true')
         
-        self.accept('f1', toggleDebug)
-
         # initializing player
         self.player = Player(self)
         # allow player collision contact handling
@@ -90,6 +259,13 @@ class Main(ShowBase):
         self.switchSound = False
         # starting theme
         themeSoundLong.play()
+    
+        # on/off debug mode
+        def toggleDebug():
+            if debugNP.isHidden():
+                debugNP.show()
+            else:
+                debugNP.hide()
         
         def update(task):
             # updating Bullet physics engine
@@ -106,9 +282,80 @@ class Main(ShowBase):
                 self.switchSound = False
                 
             return task.cont
-        taskMgr.add(update, 'update')
+        
+        #- Add time limit count task
+        taskMgr.doMethodLater(1,self.timeLimitCount, 'time-limit-count')
+        taskMgr.add(update, 'update')  
+        self.accept('f1', toggleDebug)
+        
+    def exitMainMenu(self):
+        "Finishes main menu and starts game"
+        #Unregister tasks
+        self.taskMgr.remove("mainMenuKeysTask")
+        
+        # Set new state
+        self.state = "main-stage"
+
+        #Destroy texts
+        self.inst_txt.destroy()
+        #self.title_txt.destroy()
+        self.about_txt.destroy()
+        self.options_txt.destroy()
+        #Stop bgm
+        self.bg_music.stop()
+        self.images["main_menu"].destroy()
         
         
+            # Task to handle key input in main menu
+    def mainMenuKeys(self,task):
+
+        #Key handling
+        if(self.keyM['about'][1]):
+            self.about_txt.show()
+        else:
+            self.about_txt.hide()
+            
+        if(self.keyM['start'][1]):
+            self.exitMainMenu()
+            return        
+
+        #if(self.keyM['quit'][1]):
+        #    #Exit program
+        #    sys.exit(1)
+
+        if(self.keyM['inst'][1]):
+            self.inst_txt.show()
+        else:
+            self.inst_txt.hide()
+        return task.cont    
+        # Task to handle key input in main stage
+        
+    #- Simple method to hide the help message on the screen
+    def hideHelp(self):
+        if self.helpMessage.isHidden():
+            self.helpMessage.show()
+        else:
+            self.helpMessage.hide()
+
+    #- Simple method to help setting keys when they are pressed/released
+    def setKey(self, key, value):
+        shift_value = self.keyM[key][1]
+        self.keyM[key][0] = shift_value
+        self.keyM[key][1] = value
+        
+    def timeLimitCount(self,task):
+        "Counts time limit to end stage"
+        #dt = globalClock.getDt()
+        self.time_limit = self.time_limit - 1
+
+        if self.time_limit < 0:
+            #End game
+            self.gameIsOver = -1
+            self.time_limit = 0    
+    
+        self.time_score_message.setText("Remaining Time = %.1f \nScore: %i" % (self.time_limit,self.score))
+        return task.again
+    
 
 main = Main()
 # Starting mainLoop

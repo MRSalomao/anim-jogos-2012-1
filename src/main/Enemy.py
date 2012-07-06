@@ -24,7 +24,7 @@ class Enemy(Creature):
         self.alive = True
         
         # enemy's pursue speed P-units/s
-        self.speed = 1.2
+        self.speed = 2.9
         
         # enemy's rotation speed angles/s
         self.rotSpeed = 10
@@ -42,6 +42,8 @@ class Enemy(Creature):
         
         # the name of the task the zombie is currently performing
         self.enemyActiveState = ""
+        
+        self.isEnemyAttacking = False
         
         # the cross point of the portal that the zombie is trying to cross
         self.currentCrossPointGoal = None
@@ -75,9 +77,9 @@ class Enemy(Creature):
         # Get Joints
         self.joints = {}
         
-        for bodyPart in ['leg_lr', 'leg_ll', 'arm_lr', 'arm_ll']:
-            # Get joint control structure
-            self.joints[bodyPart] = self.enemyModel.controlJoint(None, 'modelRoot', bodyPart)
+        #for bodyPart in ['leg_lr', 'leg_ll', 'arm_lr', 'arm_ll']:
+        #    # Get joint control structure
+        #    self.joints[bodyPart] = self.enemyModel.controlJoint(None, 'modelRoot', bodyPart)
         
         # getting 1 by 1 and attaching them to their corresponding bones     
         for bodyPart in bodyParts:
@@ -93,7 +95,7 @@ class Enemy(Creature):
             # ****SCALE****
             
             self.mainRef.world.attachRigidBody(self.bulletbodyPartNode)
-            self.bodyPartNode.setCollideMask( BitMask32.bit( int(self.name.split('_')[1] ) ) )
+            self.bodyPartNode.setCollideMask( BitMask32.bit( 2 ) )
        
             self.bodyPartNode.wrtReparentTo(self.enemyModel.exposeJoint(None,"modelRoot",bodyPart))
             
@@ -172,7 +174,7 @@ class Enemy(Creature):
             
             taskMgr.remove( self.enemyActiveState )
             self.enemyActiveState = self.name + "htp"
-            taskMgr.add(self.headToPortal, self.enemyActiveState)
+            taskMgr.add(self.headToPortalStep, self.enemyActiveState)
         
         
         # Go to the middle cross point
@@ -182,12 +184,23 @@ class Enemy(Creature):
             
             taskMgr.remove( self.enemyActiveState )
             self.enemyActiveState = self.name + "htp"
-            taskMgr.add(self.headToPortal, self.enemyActiveState)
+            taskMgr.add(self.headToPortalStep, self.enemyActiveState)
             
     #                 ======================================================================== 
     #                 ======================== STATE MACHINE METHODS ==========================        
     def pursueTargetStep(self, task):
         if (self.mainRef.player.currentRegionID == self.currentRegionID):
+            
+            if ( self.mainRef.player.playerNP.getPos(self.enemyNP).length() < 4.0):
+                if (not self.isEnemyAttacking):
+                    self.speed += 1.0
+                    self.isEnemyAttacking = True
+                    self.enemyModel.loop("attack")     
+                                   
+            elif (self.isEnemyAttacking):
+                self.speed -= 1.0
+                self.isEnemyAttacking = False
+                self.enemyModel.loop("walk") 
             
             targetDirection = Vec2( self.mainRef.player.playerNP.getPos(self.enemyNP).getXy() )
             targetDirectionAngle = Vec2(-sin(radians(self.enemyModel.getH())), 
@@ -236,10 +249,17 @@ class Enemy(Creature):
         
         return task.cont
     
-    def headToPortal(self, task):
+    def headToPortalStep(self, task):
         directionVec = Vec3(self.currentCrossPointGoal.getX() - self.enemyNP.getX(),
                             self.currentCrossPointGoal.getY() - self.enemyNP.getY(), 0)
         directionVec.normalize()
+        
+        targetDirection = Vec2( self.currentCrossPointGoal - self.enemyNP.getPos().getXy() )
+        targetDirectionAngle = Vec2(-sin(radians(self.enemyModel.getH())), 
+                                     cos(radians(self.enemyModel.getH())) ).signedAngleDeg(targetDirection)
+
+        rotationAngle = targetDirectionAngle * self.rotSpeed * globalClock.getDt()
+        self.enemyModel.setH(self.enemyModel.getH() + rotationAngle)
         
         self.enemyNP.setPos( self.enemyBody.move( directionVec * self.speed * globalClock.getDt() ) )
         

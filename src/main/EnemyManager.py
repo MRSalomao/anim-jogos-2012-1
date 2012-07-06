@@ -12,7 +12,7 @@ class EnemyManager(object):
         # array containing enemy objects
         self.enemys = []
         self.activeEnemys = 0
-        self.maxEnemys = 4
+        self.maxEnemys = 5
         # list of spawn points available
         self.spawnPointsList = []
         
@@ -24,7 +24,7 @@ class EnemyManager(object):
 #            print self.spawnPointsList[-1].regionID, self.spawnPointsList[-1].position
 
         # start
-        taskMgr.doMethodLater(5.0, self.startInvasion, 'Start Invasion')
+        taskMgr.doMethodLater(1.0, self.startInvasion, 'Start Invasion')
         
     def spawnEnemy(self,mass=50,mov_force=1,max_force=5):
         "Spawns 'n_enemies' random enemies with mass 'mass', movement force 'mov_force' and max force 'max_force' in the stage, aiming for the player"
@@ -33,7 +33,7 @@ class EnemyManager(object):
         enemy_index = len(self.enemys)
  
         # Choose spawn point
-        randSpawnPointIndex = random.randrange( 1, len(self.spawnPointsList) )
+        randSpawnPointIndex = random.randrange( 0, len(self.spawnPointsList) )
         chosenSpawnPoint = self.spawnPointsList[ randSpawnPointIndex ]
         
         # Creating enemy
@@ -124,4 +124,5 @@ class EnemyManager(object):
                 print "[Enemy] Destroying Enemy_%d" % (enemyIndex)
                 self.enemys[enemyIndex].destroy()
                 self.activeEnemys-=1
+                self.mainRef.score += 1
             
