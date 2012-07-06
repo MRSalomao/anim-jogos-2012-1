@@ -13,7 +13,7 @@ import random
 
 class Enemy(Creature):
     
-    def __init__(self, mainReference, name, position):
+    def __init__(self, mainReference, name, position, regionID):
         
         super(Enemy, self).__init__(mainReference)
         
@@ -27,7 +27,7 @@ class Enemy(Creature):
         self.rotSpeed = 10
         
         # enemy's current convex region; for pursue purposes
-        self.currentRegionID = 1
+        self.currentRegionID = regionID
         
         # Hit Points of each part of zombie
         self.hitPoints = {'leg_lr':2, 'leg_ll':2, 'arm_lr':2, 'arm_ll':2}
@@ -42,6 +42,10 @@ class Enemy(Creature):
         
         # the cross point of the portal that the zombie is trying to cross
         self.currentCrossPointGoal = None
+        
+        # the time that the enemy will spend confused
+        self.lostTargetTotalTime = 1.0
+        self.lostTargetTimer = self.lostTargetTotalTime
         
         # load our zombie
         self.enemyModel = Actor("../../models/model_zombie/zombie")
@@ -101,7 +105,15 @@ class Enemy(Creature):
 #            self.mainRef.world.attachRigidBody(self.bulletbodyPartNode)
 #       
 #            self.bodyPartNode.wrtReparentTo(self.enemyModel.exposeJoint(None,"modelRoot",bodyPart))
+
+        # initial path must be calculated
         self.updatePath()
+        
+        # adding a task to check if the enemy is leaving their region
+        self.checkIfChangedRegionName = self.name + "cicr"
+        self.oldPosition = self.enemyNP.getPos()
+        taskMgr.add(self.checkIfChangedRegion, self.checkIfChangedRegionName)
+        
         # walk loop
         self.enemyModel.loop("attack")
         
@@ -135,8 +147,37 @@ class Enemy(Creature):
         self.enemyModel.show()
         self.enemyModel.loop("walk")
         
+    
+    def setNewCourse(self):
+        # Simply follow the player
+        if (len(self.portalsPathList) == 0):
+            taskMgr.remove( self.enemyActiveState )
+            self.enemyActiveState = self.name + "pt"
+            taskMgr.add(self.pursueTargetStep, self.enemyActiveState)
+
+        
+        # Go to the cross point that makes you closer to your target
+        elif (self.portalsPathList[0].connectedRegionsIDs[0] == self.mainRef.player.currentRegionID or
+              self.portalsPathList[0].connectedRegionsIDs[1] == self.mainRef.player.currentRegionID):
+            
+            self.setOptimalCrossPoint()
+            
+            taskMgr.remove( self.enemyActiveState )
+            self.enemyActiveState = self.name + "htp"
+            taskMgr.add(self.headToPortal, self.enemyActiveState)
+        
+        
+        # Go to the middle cross point
+        else:
+            
+            self.currentCrossPointGoal = self.portalsPathList[0].middleCrossPoint
+            
+            taskMgr.remove( self.enemyActiveState )
+            self.enemyActiveState = self.name + "htp"
+            taskMgr.add(self.headToPortal, self.enemyActiveState)
+            
     #                 ======================================================================== 
-    #                 ======================== STATE MACHINE METHODS ==========================
+    #                 ======================== STATE MACHINE METHODS ==========================        
     def pursueTargetStep(self, task):
         if (self.mainRef.player.currentRegionID == self.currentRegionID):
             
@@ -162,7 +203,7 @@ class Enemy(Creature):
     def lostTargetStep(self, task):
         self.enemyNP.setPos( self.enemyBody.move(Vec3(-sin(radians(self.enemyModel.getH())),
                                                        cos(radians(self.enemyModel.getH())),
-                                                        0) ) * self.speed * globalClock.getDt() )
+                                                        0) * self.speed * globalClock.getDt() ) )
         self.lostTargetTimer -= globalClock.getDt()
         
         if (self.lostTargetTimer < 0):
@@ -197,14 +238,6 @@ class Enemy(Creature):
         return task.cont    
     #              ====================== END OF STATE MACHINE METHODS ========================  
     #              ============================================================================
-        
-        
-    def pursue(self):
-        self.lostTargetTotalTime = 1.0
-
-        self.lostTargetTimer = self.lostTargetTotalTime
-                    
-        taskMgr.add(self.pursueTargetStep, self.name + 'pt')
         
     def destroy(self):
         taskMgr.remove( self.enemyActiveState )
@@ -270,17 +303,19 @@ class Enemy(Creature):
             lastRegionFatherID = lastRegionFather[0]
             self.portalsPathList.append(lastRegionFather[1])
         
-        # putting portals path on the right order for enemy pursuing algorithm    
-        self.portalsPathList.sort(reverse=True)
-        self.portalsPathList.pop()
+        # putting portals path on the right order for enemy pursuing algorithm
+        self.portalsPathList.pop()  
+        self.portalsPathList.reverse()
         
-#        for portal in portalsPathList:
-#            print portal.connectedRegionsIDs
+        
+        print "lista de portais:"
+        for portal in self.portalsPathList:
+            print portal.connectedRegionsIDs
 
         self.setNewCourse()
 
-    def checkIfChangedRegion(self, lastRegion=0):
-
+    def checkIfChangedRegion(self, task, lastRegion=0):
+        
         for portalEntrance in self.mainRef.map.convexRegions[self.currentRegionID].portalEntrancesList:
             
             if ( self.intersect( self.oldPosition, self.enemyNP.getPos(), 
@@ -288,23 +323,23 @@ class Enemy(Creature):
                                  and portalEntrance.portal.connectedRegionsIDs[0] != lastRegion 
                                  and portalEntrance.portal.connectedRegionsIDs[1] != lastRegion ):
                 
-                oldRegion = self.currentRegionID
+                oldRegion = self.mainRef.player.currentRegionID
                 self.currentRegionID = portalEntrance.connectedRegionID
+
                 
                 # Debug
                 print self.name + " region changed: ", oldRegion, ">", self.currentRegionID
                 
-                # erase last item of portalsPathList
-                self.portalsPathList.pop(0)
+                # erase last item of portalsPathList (if it isn't empty)
+                if (len(self.portalsPathList) != 0):
+                    self.portalsPathList.pop(0)
                 
-                # alert all enemys
+                # new course must be calculated if the enemy changed it's region
                 self.setNewCourse()
-                
-                # check again
-                self.checkIfChangedRegion(oldRegion)
         
-        self.oldPosition = self.mainRef.player.playerNP.getPos()
-              
+        self.oldPosition = self.enemyNP.getPos()
+        
+        return task.cont        
 
     def ccw(self, A,B,C):
         return (C.getY()-A.getY())*(B.getX()-A.getX()) > (B.getY()-A.getY())*(C.getX()-A.getX())
@@ -312,37 +347,6 @@ class Enemy(Creature):
     def intersect(self, A,B,C,D):
         return self.ccw(A,C,D) != self.ccw(B,C,D) and self.ccw(A,B,C) != self.ccw(A,B,D)
 
-
-
-    def setNewCourse(self):
-        
-        # Simply follow the player
-        if (len(self.portalsPathList) == 0):
-            
-            taskMgr.remove( self.enemyActiveState )
-            self.enemyActiveState = self.name + "pt"
-            taskMgr.add(self.pursueTargetStep, self.enemyActiveState)
-
-        
-        # Go to the cross point that makes you closer to your target
-        elif (self.portalsPathList[0].connectedRegionsIDs[0] == self.mainRef.player.currentRegionID or
-              self.portalsPathList[0].connectedRegionsIDs[1] == self.mainRef.player.currentRegionID):
-            
-#            self.setOptimalCrossPoint()
-            
-            taskMgr.remove( self.enemyActiveState )
-            self.enemyActiveState = self.name + "htp"
-            taskMgr.add(self.headToPortal, self.enemyActiveState)
-        
-        
-        # Go to the middle cross point
-        else:
-            
-            self.currentCrossPointGoal = self.portalsPathList[0].middleCrossPoint
-            
-            taskMgr.remove( self.enemyActiveState )
-            self.enemyActiveState = self.name + "htp"
-            taskMgr.add(self.headToPortal, self.enemyActiveState)
 
 
     def setOptimalCrossPoint(self):
@@ -363,7 +367,7 @@ class Enemy(Creature):
             
         if (deltaFrontiersVec.getX() == 0):
             tang1 = deltaPositionVec.getY() / deltaPositionVec.getX()
-            b2 = frontierPoint.getY() - tang2 * frontierPoint.getX()
+            b1 = positionPoint.getY() - tang1 * positionPoint.getX()
             
             xRes = frontierPoint.getX()
             yRes = tang1 * xRes + b1
@@ -381,45 +385,45 @@ class Enemy(Creature):
             
             
         if (deltaFrontiersVec.getX() == 0):
-            if ( ( yRes > self.portalsPathList[0].frontiers[0].getY() and yRes < self.portalsPathList[0].frontiers[1].getY() ) or
-                 ( yRes < self.portalsPathList[0].frontiers[0].getY() and yRes > self.portalsPathList[0].frontiers[1].getY() ) ) :
+            if ( ( yRes > self.portalsPathList[0].crossPoints[0].getY() and yRes < self.portalsPathList[0].crossPoints[1].getY() ) or
+                 ( yRes < self.portalsPathList[0].crossPoints[0].getY() and yRes > self.portalsPathList[0].crossPoints[1].getY() ) ) :
                 self.currentCrossPointGoal = Vec2(xRes, yRes)
                 
-            elif (yRes > self.portalsPathList[0].frontiers[0].getY() and
-                  yRes > self.portalsPathList[0].frontiers[1].getY() ):
-                if ( self.portalsPathList[0].frontiers[0].getY() > 
-                     self.portalsPathList[0].frontiers[1].getY()):
-                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[0]
+            elif (yRes > self.portalsPathList[0].crossPoints[0].getY() and
+                  yRes > self.portalsPathList[0].crossPoints[1].getY() ):
+                if ( self.portalsPathList[0].crossPoints[0].getY() > 
+                     self.portalsPathList[0].crossPoints[1].getY()):
+                    self.currentCrossPointGoal = self.portalsPathList[0].crossPoints[0]
                 else:
-                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[1]
+                    self.currentCrossPointGoal = self.portalsPathList[0].crossPoints[1]
         
             else:
-                if ( self.portalsPathList[0].frontiers[0].getY() < 
-                     self.portalsPathList[0].frontiers[1].getY()):
-                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[0]
+                if ( self.portalsPathList[0].crossPoints[0].getY() < 
+                     self.portalsPathList[0].crossPoints[1].getY()):
+                    self.currentCrossPointGoal = self.portalsPathList[0].crossPoints[0]
                 else:
-                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[1]
+                    self.currentCrossPointGoal = self.portalsPathList[0].crossPoints[1]
          
          
         else:
-            if ( ( xRes > self.portalsPathList[0].frontiers[0].getX() and xRes < self.portalsPathList[0].frontiers[1].getX() ) or
-                 ( xRes < self.portalsPathList[0].frontiers[0].getX() and xRes > self.portalsPathList[0].frontiers[1].getX() ) ) :
+            if ( ( xRes > self.portalsPathList[0].crossPoints[0].getX() and xRes < self.portalsPathList[0].crossPoints[1].getX() ) or
+                 ( xRes < self.portalsPathList[0].crossPoints[0].getX() and xRes > self.portalsPathList[0].crossPoints[1].getX() ) ) :
                 self.currentCrossPointGoal = Vec2(xRes, yRes)
                 
-            elif (xRes > self.portalsPathList[0].frontiers[0].getX() and
-                  xRes > self.portalsPathList[0].frontiers[1].getX()):
-                if ( self.portalsPathList[0].frontiers[0].getX() > 
-                     self.portalsPathList[0].frontiers[1].getX()):
-                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[0]
+            elif (xRes > self.portalsPathList[0].crossPoints[0].getX() and
+                  xRes > self.portalsPathList[0].crossPoints[1].getX()):
+                if ( self.portalsPathList[0].crossPoints[0].getX() > 
+                     self.portalsPathList[0].crossPoints[1].getX()):
+                    self.currentCrossPointGoal = self.portalsPathList[0].crossPoints[0]
                 else:
-                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[1]
+                    self.currentCrossPointGoal = self.portalsPathList[0].crossPoints[1]
         
             else:
-                if ( self.portalsPathList[0].frontiers[0].getX() < 
-                     self.portalsPathList[0].frontiers[1].getX()):
-                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[0]
+                if ( self.portalsPathList[0].crossPoints[0].getX() < 
+                     self.portalsPathList[0].crossPoints[1].getX()):
+                    self.currentCrossPointGoal = self.portalsPathList[0].crossPoints[0]
                 else:
-                    self.currentCrossPointGoal = self.portalsPathList[0].frontiers[1]
+                    self.currentCrossPointGoal = self.portalsPathList[0].crossPoints[1]
 
 
 

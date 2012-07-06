@@ -50,7 +50,7 @@ class Map(object):
         
         self.convexRegionsGeometry = loader.loadModel("../../models/H_Block/ConvexRegions2")
         self.portalsGeometry = loader.loadModel("../../models/H_Block/Portals2")
-        self.portalsGeometry.reparentTo(self.mainRef.render)
+#        self.portalsGeometry.reparentTo(self.mainRef.render)
         
         # Regions
         self.convexRegions.append( Region(0) ) # Just making the  access to convexRegions easier

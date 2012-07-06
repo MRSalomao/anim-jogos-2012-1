@@ -1,5 +1,6 @@
 from direct.task import Task
 from Enemy import *
+from pathfind.SpawnPoint import *
 
 import random
 
@@ -11,14 +12,17 @@ class EnemyManager(object):
         # array containing enemy objects
         self.enemys = []
         
-        # List of points 3-D space in which enemies can spawn at
-        # TODO: read these spawn points from an egg archive that contains all spawn points from each region
-        # spawn points from H-208 classroom
-        self.spawn_points = [Point3(2, 2, 0.09),Point3(-2, -2, 0.09)] # FIXME
-        self.spawn_points2 = [Point3(15, 4, 0.09),Point3(-34, -5, 0.09)] # FIXME
+        # list of spawn points available
+        self.spawnPointsList = []
+        
+        self.spawnPointGeometry = loader.loadModel("../../models/H_Block/H_Block_SpawnPts")
+        
+        for spawnPoint in self.spawnPointGeometry.getChild(0).getChildren():
+            self.spawnPointsList.append( SpawnPoint( Point3(spawnPoint.getPos()) + Vec3(0,0,1), int( spawnPoint.getNode(0).getTag("prop") ) ) ) # creates new spawn point with specified coordinate and regionID
+#            print self.spawnPointsList[-1].regionID, self.spawnPointsList[-1].position
 
         # start
-        taskMgr.doMethodLater(2.0, self.startInvasion, 'Start Invasion')
+        taskMgr.doMethodLater(5.0, self.startInvasion, 'Start Invasion')
         
     def startRandomInvasion(self,n_enemies,mass=50,mov_force=1,max_force=5):
         "Spawns 'n_enemies' random enemies with mass 'mass', movement force 'mov_force' and max force 'max_force' in the stage, aiming for the player"
@@ -26,24 +30,22 @@ class EnemyManager(object):
         # For each enemy required, spawn at different spawn point
         for i in range(n_enemies):
             # Choose spawn point
-            random.seed()
-            chosen_spawn_point = random.choice(self.spawn_points)
+            chosenSpawnPoint = self.spawnPointsList[ random.randrange( 1, len(self.spawnPointsList) ) ]
 
             # Creating enemy
-            enemy = Enemy(self.mainRef,'enemy_' + str(i),chosen_spawn_point)
-            self.enemys.append(enemy)
-            
-            # pursue on path find
-            enemy.pursue()
-            
+            if(len(self.enemys) < 4):
+                enemy = Enemy(self.mainRef,'enemy_' + str(i), chosenSpawnPoint.position, chosenSpawnPoint.regionID)
+                self.enemys.append(enemy)  
     
     def disseminateTargetNewRegion(self):
+        print "disseminate"
         self.enemyIndex = 0
         disseminationStep = 0.04 # time between each zombie updatePath call
         self.mainRef.taskMgr.remove('region_dissemination') # removes an old disseminate task if exists one
         self.mainRef.taskMgr.doMethodLater(disseminationStep, self.newRegionDissemination, 'region_dissemination')
     
     def newRegionDissemination(self,task):
+        print "disseminate step"
         self.enemys[self.enemyIndex].updatePath()
         if (self.enemyIndex < (len(self.enemys) - 1) ):
             self.enemyIndex += 1
@@ -65,7 +67,7 @@ class EnemyManager(object):
 #            for (neighbor in region.)
         self.startRandomInvasion(1)
         
-        return task.done
+        return task.again
 
     def handleShot(self,rigid_node_target):
         # Handles how player shots affect zombies
