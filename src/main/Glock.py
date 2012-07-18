@@ -25,6 +25,7 @@ class Glock(Weapon):
         self.bullets_max = 10
         self.bullets = self.bullets_max
         self.reloadTime = 2
+        self.validateReload = True
         
     def shootAnim(self):
         super(Glock, self).shootAnim()

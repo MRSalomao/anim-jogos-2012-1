@@ -144,9 +144,14 @@ class Player(Creature):
     def reloadWeapon(self):
         "Reload weapon ammo"
 
+        if (not self.activeWeapon.validateReload):
+            return
+        self.activeWeapon.validateReload = False
+
         def reloadBullets(task):
             self.activeWeapon.bullets = self.activeWeapon.bullets_max
             self.mainRef.playerHUD.reloadTxt()
+            self.activeWeapon.validateReload = True
         
         taskMgr.doMethodLater(self.activeWeapon.reloadTime, reloadBullets, 'reload-bullets')
         

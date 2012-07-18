@@ -12,7 +12,7 @@ class EnemyManager(object):
         # array containing enemy objects
         self.enemys = []
         self.activeEnemys = 0
-        self.maxEnemys = 10
+        self.maxEnemys = 1
         # list of spawn points available
         self.spawnPointsList = []
         

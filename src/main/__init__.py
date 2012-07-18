@@ -154,7 +154,7 @@ class Main(ShowBase):
         
     def mainMenu(self,task):
         "Defines the main menu state"
-        print "Comecei o Menu"
+
         # Load Music
         self.bg_music = self.loader.loadSfx("../../sounds/h_block_themesound_2.mp3")
         self.bg_music.setLoop(True)
