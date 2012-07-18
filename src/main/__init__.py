@@ -11,7 +11,7 @@ from pathfind import *
 
 from panda3d.core import loadPrcFileData
 
-loadPrcFileData('', 'fullscreen #t')
+#loadPrcFileData('', 'fullscreen #t')
 
 
 import sys
@@ -77,25 +77,22 @@ class Main(ShowBase):
         # 'splash-screen' - for splash screen
         # 'main-menu' - for main menu
         # 'main-stage' - for the main stage
-        self.state = 'main-stage'
+        self.state = 'splash-screen'
 
-        ###################################################### SPLASH SCREEN ##################################################
 
         #Start splash screen
         taskMgr.add(self.splashScreen, 'splash-screen')
         
-        #Start main stage loop
-        taskMgr.add(self.mainStage, 'main-stage')
 
-        taskMgr.add(self.mainMenu, 'main-menu')
+        #taskMgr.add(self.mainMenu, 'main-menu')
         
-        taskMgr.add(self.endGame, 'end-game')
+        #taskMgr.add(self.endGame, 'end-game')
         
+        
+        ###################################################### SPLASH SCREEN ##################################################
+
     def splashScreen(self,task):
         "Defines the splash screen state"
-
-        if (self.state.lower() != 'splash-screen'):
-            return task.cont
 
         if (self.validateSplash): #Indicate first time run
             #Load required images
@@ -138,7 +135,7 @@ class Main(ShowBase):
             self.splash_seq.start()
 
             self.validateSplash = False #dont run this part of the splash again    
-        
+
         #Wait splash screen
         if not self.splash_seq.isPlaying():
             #Allow next state
@@ -147,16 +144,17 @@ class Main(ShowBase):
             #Clean garbage
             for image in self.images.keys():
                 self.images[image].destroy()
-        else:
-            #Iterate again
-            return task.cont
+                
+            #Start main menu
+            taskMgr.add(self.mainMenu, 'main-menu')
+
+            return task.done
+        
+        return task.cont
         
     def mainMenu(self,task):
         "Defines the main menu state"
-
-        if (self.state.lower() != 'main-menu'):
-            return task.cont
-
+        print "Comecei o Menu"
         # Load Music
         self.bg_music = self.loader.loadSfx("../../sounds/h_block_themesound_2.mp3")
         self.bg_music.setLoop(True)
@@ -200,9 +198,6 @@ class Main(ShowBase):
 
     def mainStage(self,task):
         "Defines the main stage state of the game"
-
-        if (self.state.lower() != 'main-stage'):
-            return task.cont
         
         ###################################################### VARIABLES ######################################################
 
@@ -215,7 +210,7 @@ class Main(ShowBase):
 
         #Set up time limit message and score
         self.score = 0 #points
-        self.time_limit = 10 #in seconds
+        self.time_limit = 200 #in seconds
         time_score_message = "Remaining Time = %.1f \nScore: %i" % (self.time_limit,self.score)
         self.time_score_message = OnscreenText(text = time_score_message, pos = (-1.33, 0.94), scale = 0.07, bg = (1, 1, 1, 0.7), mayChange=1,align=TextNode.ALeft)
 
@@ -316,6 +311,8 @@ class Main(ShowBase):
         self.bg_music.stop()
         self.images["main_menu"].destroy()
         
+        #Start main stage loop
+        taskMgr.add(self.mainStage, 'main-stage')
         
             # Task to handle key input in main menu
     def mainMenuKeys(self,task):
@@ -362,16 +359,25 @@ class Main(ShowBase):
         if self.time_limit < 0:
             #End game
             self.gameIsOver = -1
-            self.time_limit = 0    
+            self.time_limit = 0
+            taskMgr.add(self.endGame, 'end-game')
+            return task.done    
     
         self.time_score_message.setText("Remaining Time = %.1f \nScore: %i" % (self.time_limit,self.score))
         return task.again
     
+    def exitMainStage(self):
+        "Destroys the main stage"
+        pass
     
     def endGame(self,task):
         "Handles the game over state"
 
         if self.gameIsOver:
+            
+            #Exit main Stage
+            self.exitMainStage()
+            
             if (self.validateEndGame):
                 #First time running, do all stuff
 

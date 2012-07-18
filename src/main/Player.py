@@ -73,6 +73,9 @@ class Player(Creature):
         # adding the shoot event
         self.mainRef.accept("mouse1", self.shootBullet)
         
+        # adding the reload event
+        self.mainRef.accept("mouse3", self.reloadWeapon)
+        
         # player boolean to authorize player HP decrease when zombie contact happens
         self.canLoseHP = True
 
@@ -94,40 +97,60 @@ class Player(Creature):
 
 
     def shootBullet(self):
-        pTo = Vec3(-sin(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
-                       cos(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
-                       sin(radians(self.playerHeadNP.getP())) )
+        
+        if(self.activeWeapon.bullets):
+            # Consume bullet
+            self.activeWeapon.bullets -= 1
+            self.mainRef.playerHUD.reloadTxt()
 
-        result = self.mainRef.world.rayTestClosest(self.playerHeadNP.getPos(base.render), self.playerHeadNP.getPos(base.render) + (pTo * 100.0), mask = BitMask32.allOn() )
-
-        # Shoot particles
-        self.shootParticles(result)
-
-        if (result.hasHit()):
-            self.mainRef.enemyManager.handleShot(result)
-        # weapon anim
-        self.activeWeapon.shootAnim()
-        # playing shoot sound
-        glockShot = self.mainRef.loadSfx("../../sounds/glock_single_shot.mp3")
-        glockShot.setVolume(0.2)
-        glockShot.play()
+            
+            pTo = Vec3(-sin(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
+                           cos(radians(self.playerHeadNP.getH())) * cos(radians(self.playerHeadNP.getP())), 
+                           sin(radians(self.playerHeadNP.getP())) )
+    
+            result = self.mainRef.world.rayTestClosest(self.playerHeadNP.getPos(base.render), self.playerHeadNP.getPos(base.render) + (pTo * 100.0), mask = BitMask32.allOn() )
+    
+            # Shoot particles
+            self.shootParticles(result)
+    
+            if (result.hasHit()):
+                self.mainRef.enemyManager.handleShot(result)
+            # weapon anim
+            self.activeWeapon.shootAnim()
+            # playing shoot sound
+            glockShot = self.mainRef.loadSfx("../../sounds/glock_single_shot.mp3")
+            glockShot.setVolume(0.2)
+            glockShot.play()
         
     def onContactAdded(self, node1, node2):
         # decrease player's life when zombie contact happen
         if ( ( ('arm_ll' in node1.getName() ) or (node1.getName() == ('Player_NP') ) ) and 
              ( ('arm_ll' in node2.getName() ) or (node2.getName() == ('Player_NP') ) ) and
              ( self.canLoseHP ) ):
-            # decrease player hp
-            oldHPValue = int( self.mainRef.playerHUD.guiHp.node().getText() )
-            if (oldHPValue > 0):
-                decreasedHP = oldHPValue - 10
-                self.mainRef.playerHUD.guiHp.node().setText( str(decreasedHP) )
+        
+            if (self.healthPoints > 0):
+                self.healthPoints -= 10
+                self.mainRef.playerHUD.reloadTxt()
                 # block HP loss
                 self.canLoseHP = False
                 # schedule next HP loss release
                 taskMgr.doMethodLater(1, self.releaseHPLoss, 'releaseHPLoss')
                 # TODO: enemy animation call
                 # TODO: screen effect player hurt
+    
+    def reloadWeapon(self):
+        "Reload weapon ammo"
+
+        def reloadBullets(task):
+            self.activeWeapon.bullets = self.activeWeapon.bullets_max
+            self.mainRef.playerHUD.reloadTxt()
+        
+        taskMgr.doMethodLater(self.activeWeapon.reloadTime, reloadBullets, 'reload-bullets')
+        
+        # Weapon reload anim
+        self.activeWeapon.reloadAnim()
+
+ 
     
     def releaseHPLoss(self,task):
         self.canLoseHP = True

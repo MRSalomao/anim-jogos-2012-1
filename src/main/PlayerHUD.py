@@ -20,10 +20,17 @@ class PlayerHUD(object):
         
         # health points
         hpText=TextNode('hp')
-        hpText.setText( str(self.mainRef.player.healthPoints) )
+        hpText.setText( "HP: "+str(self.mainRef.player.healthPoints) )
         self.guiHp = self.mainRef.aspect2d.attachNewNode(hpText)
         self.guiHp.setScale(0.07)
         self.guiHp.setPos(-1.2,0,-0.9)
+        
+        # Ammo
+        ammoText=TextNode('ammo')
+        ammoText.setText( "AMMO: "+str(self.mainRef.player.activeWeapon.bullets) )
+        self.guiAmmo = self.mainRef.aspect2d.attachNewNode(ammoText)
+        self.guiAmmo.setScale(0.07)
+        self.guiAmmo.setPos(-1.2,0,-0.9+0.1)
         
     def createSpritesNodeSetup(self): 
     
@@ -59,3 +66,8 @@ class PlayerHUD(object):
         spriteNP.setTransparency(transparent)
          
         return spriteNP
+    
+    def reloadTxt(self):
+        "Reload text elements"
+        self.guiHp.node().setText("HP: "+ str(self.mainRef.player.healthPoints) )
+        self.guiAmmo.node().setText("AMMO: "+ str(self.mainRef.player.activeWeapon.bullets))
