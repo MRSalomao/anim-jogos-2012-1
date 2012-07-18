@@ -137,6 +137,9 @@ class Player(Creature):
                 taskMgr.doMethodLater(1, self.releaseHPLoss, 'releaseHPLoss')
                 # TODO: enemy animation call
                 # TODO: screen effect player hurt
+            else:
+                # Game is over, player is dead
+                self.mainRef.gameIsOver = -1
     
     def reloadWeapon(self):
         "Reload weapon ammo"

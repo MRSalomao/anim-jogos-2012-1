@@ -291,6 +291,7 @@ class Main(ShowBase):
         
         #- Add time limit count task
         taskMgr.doMethodLater(1,self.timeLimitCount, 'time-limit-count')
+        taskMgr.add(self.gameOverWatcher, 'game-over-watcher')
         taskMgr.add(update, 'update')  
         self.accept('f1', toggleDebug)
         
@@ -355,16 +356,22 @@ class Main(ShowBase):
         "Counts time limit to end stage"
         #dt = globalClock.getDt()
         self.time_limit = self.time_limit - 1
+        self.time_score_message.setText("Remaining Time = %.1f \nScore: %i" % (self.time_limit,self.score))
 
-        if self.time_limit < 0:
+        if self.time_limit <= 0:
             #End game
             self.gameIsOver = -1
-            self.time_limit = 0
-            taskMgr.add(self.endGame, 'end-game')
-            return task.done    
+            return task.done
     
-        self.time_score_message.setText("Remaining Time = %.1f \nScore: %i" % (self.time_limit,self.score))
         return task.again
+    
+    def gameOverWatcher(self,task):
+        "Watches for game over"
+        if(self.gameIsOver):
+            taskMgr.add(self.endGame, 'end-game')
+            return task.done
+        
+        return task.cont    
     
     def exitMainStage(self):
         "Destroys the main stage"
