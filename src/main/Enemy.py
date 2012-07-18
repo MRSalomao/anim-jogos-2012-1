@@ -54,8 +54,8 @@ class Enemy(Creature):
         
         # load our zombie
         self.enemyModel = Actor("../../models/model_zombie/zombie",{
-                                'walk':'../../models/model_zombie/zombie-walk.egg',
-                                'attack':'../../models/model_zombie/zombie-attack.egg',
+                                'walk':'../../models/model_zombie/zombie-walk',
+                                'attack':'../../models/model_zombie/zombie-attack',
 })
         # ****SCALE****
         self.enemyModel.setScale(0.55)
